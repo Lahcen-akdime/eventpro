@@ -1,10 +1,7 @@
 package com.eventPro.api.Model;
 
 import com.eventPro.api.Model.Enum.StatutReservation;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,11 +11,13 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@Table(name = "reservations")
 public class Reservation {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(unique = true)
     private String reference ;
 
     private LocalDateTime dateCreation = LocalDateTime.now() ;
@@ -29,11 +28,18 @@ public class Reservation {
 
     private LocalDateTime endEvent ;
 
+    @Enumerated(EnumType.STRING)
     private StatutReservation statutReservation ;
     private String title ;
     private String description ;
     private String place ;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id" , referencedColumnName = "id")
+    private Client client ;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id",referencedColumnName = "id")
+    private Promotion promotion ;
 
 }

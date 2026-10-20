@@ -1,16 +1,19 @@
 package com.eventPro.api.Model;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public class CategorieBillet {
+@Getter
+@Setter
+@Table(name = "TicketCategorys")
+public class TicketCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,6 +26,7 @@ public class CategorieBillet {
 
     @NotBlank
     @NotNull
+    @Column(precision = 12, scale = 2)
     private BigDecimal priceUnitaire ;
 
     @NotBlank
@@ -36,5 +40,10 @@ public class CategorieBillet {
     private int placesReserved = 0 ;
 
     private int placesVented = 0 ;
+
+    @JoinColumn(name = "event_id" , referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Event event ;
+
 
 }
