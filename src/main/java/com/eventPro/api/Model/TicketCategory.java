@@ -13,6 +13,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "TicketCategorys")
+@Entity
 public class TicketCategory {
 
     @Id

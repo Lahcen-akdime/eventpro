@@ -2,6 +2,7 @@ package com.eventPro.api.Model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "reservationLines")
+@NoArgsConstructor
 public class LigneReservation {
 
     @Id
