@@ -1,6 +1,6 @@
 package com.eventPro.api.Repository;
 
-import com.eventPro.api.Model.User;
+import com.eventPro.api.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

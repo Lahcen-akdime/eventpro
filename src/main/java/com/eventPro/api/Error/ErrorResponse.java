@@ -1,6 +1,7 @@
 package com.eventPro.api.Error;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.web.error.Error;
 import org.springframework.http.HttpStatus;
@@ -10,20 +11,17 @@ import java.util.Date;
 import java.util.List;
 
 @Builder
-public class ErrorResponse {
+public record ErrorResponse (
 
-    private Date timestamp ;
+     Date timestamp ,
 
-    private int statusCode ;
+     int statusCode ,
 
-    private String message ;
-
-    private String description ;
+     String message ,
 
     // To understand
-    private String path ;
+     String path ,
 
     // To use it later
-     private List<String> fieldErrors ;
-
-}
+      List<String> fieldErrors )
+{}

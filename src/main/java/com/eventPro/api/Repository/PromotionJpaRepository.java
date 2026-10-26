@@ -1,6 +1,6 @@
 package com.eventPro.api.Repository;
 
-import com.eventPro.api.Model.Promotion;
+import com.eventPro.api.Entity.Promotion;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

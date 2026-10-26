@@ -1,6 +1,6 @@
 package com.eventPro.api.Repository;
 
-import com.eventPro.api.Model.Ticket;
+import com.eventPro.api.Entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
