@@ -1,7 +1,7 @@
 package com.eventPro.api.Service.DataInitializer;
 
-import com.eventPro.api.Exception.InvalidVDataException;
 import com.eventPro.api.Entity.Admin;
+import com.eventPro.api.Exception.InvalidVDataException;
 import com.eventPro.api.Entity.Enum.Role;
 import com.eventPro.api.Entity.User;
 import com.eventPro.api.Service.UserService;

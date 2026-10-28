@@ -1,6 +1,7 @@
 package com.eventPro.api.Entity;
 
 import com.eventPro.api.Entity.Enum.StatutPaiement;
+import com.eventPro.api.Entity.Reservation.Reservation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

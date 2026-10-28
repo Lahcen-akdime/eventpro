@@ -1,6 +1,7 @@
 package com.eventPro.api.Entity;
 
 import com.eventPro.api.Entity.Enum.TicketState;
+import com.eventPro.api.Entity.Reservation.LigneReservation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

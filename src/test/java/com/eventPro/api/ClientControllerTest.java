@@ -1,19 +1,19 @@
 package com.eventPro.api;
 
 import com.eventPro.api.Controller.ClientController;
-import com.eventPro.api.Dto.ClientRegisterRequest;
-import com.eventPro.api.Dto.ClientResponse;
+import com.eventPro.api.Dto.Client.ClientRegisterRequest;
+import com.eventPro.api.Dto.Client.ClientResponse;
 import com.eventPro.api.Service.ClientService;
+import com.eventPro.api.Service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,9 +27,13 @@ public class ClientControllerTest {
     @MockitoBean
     ClientService clientService ;
 
+    @MockitoBean
+    UserService userService ;
+
     @Test
     public void controllerSaveClientTest()throws Exception{
-        ClientResponse response = clientService.save(any()) ;
+        ClientResponse response = ClientResponse.builder().name("test").build();
+        when(clientService.save(any(ClientRegisterRequest.class))).thenReturn(response);
         mockMvc.perform(post("/api/v1/clients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(

@@ -1,5 +1,6 @@
 package com.eventPro.api.Entity;
 
+import com.eventPro.api.Entity.Reservation.Reservation;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +17,7 @@ import java.util.List;
 @Table(name = "clients")
 @NoArgsConstructor
 @SuperBuilder
-public class Client extends User{
+public class Client extends User {
 
     private String phone ;
 

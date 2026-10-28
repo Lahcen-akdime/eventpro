@@ -1,6 +1,8 @@
-package com.eventPro.api.Entity;
+package com.eventPro.api.Entity.Reservation;
 
+import com.eventPro.api.Entity.Client;
 import com.eventPro.api.Entity.Enum.StatutReservation;
+import com.eventPro.api.Entity.Promotion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

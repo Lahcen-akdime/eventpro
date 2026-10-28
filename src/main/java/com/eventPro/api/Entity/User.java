@@ -5,6 +5,7 @@ import com.eventPro.api.Entity.Enum.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,5 +41,8 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     protected Role role ;
+
+    @Builder.Default
+    protected Boolean isActive = true ;
 
 }

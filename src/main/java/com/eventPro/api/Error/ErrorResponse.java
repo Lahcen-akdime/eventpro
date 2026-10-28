@@ -20,8 +20,5 @@ public record ErrorResponse (
      String message ,
 
     // To understand
-     String path ,
-
-    // To use it later
-      List<String> fieldErrors )
-{}
+     String path
+) {}

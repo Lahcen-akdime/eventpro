@@ -1,11 +1,10 @@
 package com.eventPro.api.Mapper;
 
-import com.eventPro.api.Dto.ClientRegisterRequest;
-import com.eventPro.api.Dto.ClientResponse;
+import com.eventPro.api.Dto.Client.ClientRegisterRequest;
+import com.eventPro.api.Dto.Client.ClientResponse;
+import com.eventPro.api.Dto.Client.ClientUpdateRequest;
 import com.eventPro.api.Entity.Client;
 import org.mapstruct.*;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 
 @Mapper(componentModel = "spring")
 public interface ClientMapper {
@@ -20,5 +19,7 @@ public interface ClientMapper {
             @Mapping(target = "role",ignore = true),
     })
     Client toEntity(ClientRegisterRequest request) ;
+
+    Client toUpdateEntity(ClientUpdateRequest request) ;
 
 }

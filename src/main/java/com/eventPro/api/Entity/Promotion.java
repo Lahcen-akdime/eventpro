@@ -3,10 +3,10 @@ package com.eventPro.api.Entity;
 import com.eventPro.api.Entity.Enum.TypeReduction;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,6 +14,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "promotions")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Promotion {
 
     @Id
@@ -31,22 +34,22 @@ public class Promotion {
     private BigDecimal valeurReduction ;
 
     @NotNull
-    private LocalDateTime start_date ;
+    private LocalDateTime startDate ;
 
     @NotNull
-    private LocalDateTime end_date ;
+    private LocalDateTime endDate ;
 
     @NotNull
     private Long limiteUtilisation ;
 
     @NotNull
-    private Long nombreUtilisations ;
+    @Builder.Default
+    private Long nombreUtilisations = 0L ;
+
+    private LocalDateTime createdAt = LocalDateTime.now() ;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id" , referencedColumnName = "id")
     private Event event ;
-
-
-
 
 }

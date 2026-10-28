@@ -1,4 +1,4 @@
-package com.eventPro.api.Dto;
+package com.eventPro.api.Dto.Client;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

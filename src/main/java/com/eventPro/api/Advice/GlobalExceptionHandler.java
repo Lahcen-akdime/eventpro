@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Date;
 
@@ -34,9 +35,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public boolean handleEmailAlreadyExistException(EmailAlreadyExistException ex, WebRequest request){
+    public ErrorResponse handleEmailAlreadyExistException(EmailAlreadyExistException ex, WebRequest request){
 
-        return buildTheError(ex,HttpStatus.BAD_REQUEST.value(),request).fieldErrors().add(ex.field) ;
+        return buildTheError(ex,HttpStatus.BAD_REQUEST.value(),request) ;
 
     }
 
@@ -87,6 +88,30 @@ public class GlobalExceptionHandler {
         return buildTheError(ex,HttpStatus.CONFLICT.value(),request) ;
     }
 
+    @ExceptionHandler(EmailNotFoundException .class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse   handleEmailNotFoundException(EmailNotFoundException ex, WebRequest request){
+        return buildTheError(ex,HttpStatus.CONFLICT.value(),request) ;
+    }
+
+    @ExceptionHandler(InvalidCredantialsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleInvalidCredantialsException(InvalidCredantialsException ex,WebRequest request){
+        return buildTheError(ex,HttpStatus.CONFLICT.value(),request) ;
+    }
+
+    @ExceptionHandler(EventNotFoundException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEventNotFoundException(EventNotFoundException ex,WebRequest request){
+        return buildTheError(ex,HttpStatus.CONFLICT.value(),request) ;
+    }
+
+    @ExceptionHandler(InvalidOperationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleInvalidOperationException(InvalidOperationException ex,WebRequest request){
+        return buildTheError(ex,HttpStatus.CONFLICT.value(),request) ;
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleAccessDeniedException(AccessDeniedException ex, WebRequest request){
@@ -100,6 +125,20 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleSystemException(SystemException ex,WebRequest request){
          return buildTheError(ex,HttpStatus.INTERNAL_SERVER_ERROR.value(),request) ;
     }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleResponseStatusException(ResponseStatusException ex,WebRequest request){
+        return buildTheError(ex,ex.getStatusCode().value(),request) ;
+    }
+
+    @ExceptionHandler(UserNotLoggedInException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleUserNotLoggedInException(UserNotLoggedInException ex,WebRequest request){
+        return buildTheError(ex,HttpStatus.UNAUTHORIZED.value(),request) ;
+    }
+
+
 
     public ErrorResponse buildTheError(Exception ex ,int status,WebRequest request){
         return ErrorResponse.builder()

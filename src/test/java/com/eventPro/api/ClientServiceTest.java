@@ -1,7 +1,7 @@
 package com.eventPro.api;
 
 
-import com.eventPro.api.Dto.ClientRegisterRequest;
+import com.eventPro.api.Dto.Client.ClientRegisterRequest;
 import com.eventPro.api.Exception.EmailAlreadyExistException;
 import com.eventPro.api.Mapper.ClientMapper;
 import com.eventPro.api.Repository.ClientJpaRepository;

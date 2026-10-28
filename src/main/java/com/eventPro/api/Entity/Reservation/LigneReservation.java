@@ -1,4 +1,4 @@
-package com.eventPro.api.Entity;
+package com.eventPro.api.Entity.Reservation;
 
 import jakarta.persistence.*;
 import lombok.Getter;
