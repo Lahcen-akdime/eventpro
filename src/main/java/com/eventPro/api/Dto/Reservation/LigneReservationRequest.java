@@ -18,4 +18,5 @@ public record LigneReservationRequest(
         @Max(100)
         Integer quantity
 
-) {}
+)
+{}

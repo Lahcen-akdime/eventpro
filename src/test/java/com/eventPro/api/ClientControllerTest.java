@@ -1,6 +1,6 @@
 package com.eventPro.api;
 
-import com.eventPro.api.Controller.ClientController;
+import com.eventPro.api.Controller.Client.ClientController;
 import com.eventPro.api.Dto.Client.ClientRegisterRequest;
 import com.eventPro.api.Dto.Client.ClientResponse;
 import com.eventPro.api.Service.ClientService;

@@ -1,6 +1,6 @@
 package com.eventPro.api.Entity.Enum;
 
-public enum TicketState {
+public enum TicketStatus {
     VALID ,
     USED ,
     CANCELLED

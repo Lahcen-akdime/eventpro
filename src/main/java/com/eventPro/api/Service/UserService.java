@@ -2,6 +2,7 @@ package com.eventPro.api.Service;
 
 import com.eventPro.api.Dto.User.UserDto;
 import com.eventPro.api.Entity.User;
+import com.eventPro.api.Exception.AccessDeniedException;
 import com.eventPro.api.Exception.InvalidCredantialsException;
 import com.eventPro.api.Mapper.UserMapper;
 import com.eventPro.api.Repository.UserJpaRepository;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.MethodNotAllowedException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Locale;
@@ -23,6 +25,7 @@ public class UserService {
     private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder ;
     private final UserMapper userMapper ;
+    private static String authEmail  ;
 
     public Optional<User> findByEmail(String email){
         return userJpaRepository.findByEmail(email) ;
@@ -54,11 +57,19 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, " connecter s'il vous plis");
         }
 
-        return (String) session.getAttribute("authEmail");
+        authEmail = (String) session.getAttribute("authEmail");
+        return authEmail ;
     }
 
     public static void saveEmailInSession(String email,HttpServletRequest servletRequest){
         HttpSession session = servletRequest.getSession() ;
         session.setAttribute("authEmail",email);
+    }
+
+    public void checkIsActive(){
+        var user = userJpaRepository.findByEmailIgnoreCase(authEmail) ;
+        if(!user.get().getIsActive()){
+            throw new AccessDeniedException("Your account is desactivated") ;
+        }
     }
 }

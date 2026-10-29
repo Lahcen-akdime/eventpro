@@ -1,6 +1,6 @@
 package com.eventPro.api.Entity;
 
-import com.eventPro.api.Entity.Enum.TicketState;
+import com.eventPro.api.Entity.Enum.TicketStatus;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -10,8 +10,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@Setter
-@Table(name = "tickets")
+@Table(name = "tickets",indexes = {
+                                    @Index(columnList = "reservation_line_id"),
+                                    @Index(columnList = "ticket_category_id")
+})
 @Entity
 public class Ticket {
 
@@ -19,7 +21,7 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
 
-    @Column(unique = true)
+    @Column(unique = false)
     private String code ;
 
     private LocalDateTime dateEmission ;
@@ -27,16 +29,13 @@ public class Ticket {
     private LocalDateTime dateControle  ;
 
     @Enumerated(EnumType.STRING)
-    private TicketState state ;
+    private TicketStatus ticketState ;
 
-    @JoinColumn(name = "category_id" , referencedColumnName = "id")
+    @JoinColumn(name = "ticket_category_id" , referencedColumnName = "id",nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private TicketCategory ticketCategory ;
 
-    @JoinColumn(name = "ligneReservation_id" , referencedColumnName = "id")
+    @JoinColumn(name = "reservation_line_id" , referencedColumnName = "id",nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private LigneReservation ligneReservation ;
-
-
-
 }

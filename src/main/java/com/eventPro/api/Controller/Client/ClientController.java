@@ -1,5 +1,5 @@
 
-package com.eventPro.api.Controller;
+package com.eventPro.api.Controller.Client;
 
 import com.eventPro.api.Dto.Client.ClientRegisterRequest;
 import com.eventPro.api.Dto.Client.ClientResponse;
@@ -9,7 +9,6 @@ import com.eventPro.api.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

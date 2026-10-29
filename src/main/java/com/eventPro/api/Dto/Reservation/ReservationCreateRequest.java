@@ -18,7 +18,6 @@ public record ReservationCreateRequest(
         @Size(max = 10)
         List<@Valid LigneReservationRequest> lines,
 
-        @Pattern(regexp = "^[A-Za-z0-9_-]{4,20}$")
         String promoCode
 
 ) {}

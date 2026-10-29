@@ -1,7 +1,7 @@
 package com.eventPro.api.Advice;
 
 
-import com.eventPro.api.Error.ErrorResponse;
+import com.eventPro.api.Response.ErrorResponse;
 import com.eventPro.api.Exception.*;
 import jakarta.transaction.SystemException;
 import org.springframework.dao.DataIntegrityViolationException;

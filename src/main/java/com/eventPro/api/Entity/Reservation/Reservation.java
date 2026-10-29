@@ -4,8 +4,7 @@ import com.eventPro.api.Entity.Client;
 import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Entity.Promotion;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,6 +13,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "reservations")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Reservation {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

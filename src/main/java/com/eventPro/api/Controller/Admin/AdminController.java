@@ -1,6 +1,5 @@
-package com.eventPro.api.Controller;
+package com.eventPro.api.Controller.Admin;
 
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

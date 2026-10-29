@@ -2,24 +2,22 @@ package com.eventPro.api.Controller.Client;
 
 import com.eventPro.api.Dto.Reservation.ReservationCreateRequest;
 import com.eventPro.api.Dto.Reservation.ReservationResponse;
-import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/clients/{clientId}/reservations")
+@RequestMapping("/api/v1/clients/reservations")
 @RequiredArgsConstructor
 @Tag(name = "Reservations")
 public class ClientReservationController {
@@ -27,50 +25,29 @@ public class ClientReservationController {
     private final ReservationService reservationService;
 
     @PostMapping
-    @Operation(summary = "Créer une réservation")
-    public ResponseEntity<ReservationResponse> create(
-            @PathVariable UUID clientId,
-            @Valid @RequestBody ReservationCreateRequest request) {
-
-        return reservationService.create(clientId, request);
-
+    @Operation(summary = "create reservation")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ReservationResponse create( @Valid @RequestBody ReservationCreateRequest request,HttpServletRequest servletRequest) {
+        return reservationService.create(request,servletRequest);
     }
 
-    /*@GetMapping
+    @GetMapping("/my")
     @Operation(summary = "Lister les réservations du client")
-    public ResponseEntity<PageResponse<ReservationSummarResponse>> list(
-            @PathVariable UUID clientId,
-            @RequestParam(required = false) StatutReservation status,
-            @PageableDefault(
-                    size = 20,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable) {
-
-        return ResponseEntity.ok(
-                reservationService.list(clientId, status, pageable)
-        );
+    public Page<ReservationResponse> list(@PageableDefault(size = 3) Pageable pageable, HttpServletRequest request) {
+        return reservationService.getMyReservations(pageable,request ) ;
     }
 
     @GetMapping("/{reservationId}")
     @Operation(summary = "Consulter une réservation")
-    public ResponseEntity<ReservationResponse> getById(
-            @PathVariable UUID clientId,
-            @PathVariable UUID reservationId) {
-
-        return ResponseEntity.ok(
-                reservationService.getById(clientId, reservationId)
-        );
+    public ReservationResponse getById( @PathVariable UUID reservationId) {
+        return reservationService.getById(reservationId) ;
     }
+
 
     @PostMapping("/{reservationId}/cancel")
     @Operation(summary = "Annuler une réservation en attente de paiement")
-    public ResponseEntity<ReservationResponse> cancel(
-            @PathVariable UUID clientId,
-            @PathVariable UUID reservationId) {
-
-        return ResponseEntity.ok(
-                reservationService.cancel(clientId, reservationId)
-        );
-    }*/
+    @ResponseStatus
+    public void cancel(@PathVariable UUID reservationId) {
+        reservationService.cancel(reservationId);
+    }
 }
