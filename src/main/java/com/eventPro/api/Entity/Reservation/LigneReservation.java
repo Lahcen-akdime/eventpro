@@ -1,9 +1,7 @@
 package com.eventPro.api.Entity.Reservation;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -11,8 +9,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = "reservationLines")
-@NoArgsConstructor
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LigneReservation {
 
     @Id

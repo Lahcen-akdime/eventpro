@@ -33,7 +33,6 @@ public class TicketCategory {
     @Column(nullable = false)
     private int quotaMaxParClient ;
 
-
     private int reservedPlaces = 0 ;
 
     private int ventedplaces = 0 ;
@@ -44,6 +43,10 @@ public class TicketCategory {
 
     public int getAvailblePlaces(){
         return totalQuantity - (reservedPlaces + ventedplaces) ;
+    }
+
+    public void reserve(int quantite){
+        reservedPlaces++ ;
     }
 
 

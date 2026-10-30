@@ -2,6 +2,7 @@ package com.eventPro.api.Entity.Reservation;
 
 import com.eventPro.api.Entity.Client;
 import com.eventPro.api.Entity.Enum.StatutReservation;
+import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Promotion;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,4 +47,7 @@ public class Reservation {
     @JoinColumn(name = "promotion_id",referencedColumnName = "id")
     private Promotion promotion ;
 
+    @OneToOne
+    @JoinColumn(name = "event_id",referencedColumnName = "id")
+    private Event event ;
 }

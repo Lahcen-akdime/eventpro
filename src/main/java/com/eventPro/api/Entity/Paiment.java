@@ -4,8 +4,7 @@ import com.eventPro.api.Entity.Enum.StatutPaiement;
 import com.eventPro.api.Entity.Reservation.Reservation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,6 +14,9 @@ import java.util.UUID;
 @Setter
 @Table(name = "paiments")
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Paiment {
 
     @Id
