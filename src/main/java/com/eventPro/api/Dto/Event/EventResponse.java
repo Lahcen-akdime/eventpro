@@ -1,5 +1,6 @@
 package com.eventPro.api.Dto.Event;
 
+import com.eventPro.api.Dto.TicketCategory.TicketCategoryResponse;
 import com.eventPro.api.Entity.Enum.StatutEvenement;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,4 +24,5 @@ public record EventResponse(
          String organizerId,
          String organizerName,
          String organizationName
+         //TicketCategoryResponse categories
 ) {}

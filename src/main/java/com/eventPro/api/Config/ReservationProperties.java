@@ -8,6 +8,4 @@ import java.time.Duration;
 
 @Validated
 @ConfigurationProperties(prefix = "eventpro.reservation")
-public record ReservationProperties(
-        @NotNull Duration holdDuration
-) {}
+public record ReservationProperties(@NotNull Duration holdDuration) {}

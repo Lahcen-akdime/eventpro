@@ -10,9 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@Table(name = "tickets",indexes = {
-                                    @Index(columnList = "reservation_line_id"),
-                                    @Index(columnList = "ticket_category_id")
+@Table(name = "tickets",indexes = {@Index(columnList = "reservation_line_id"), @Index(columnList = "ticket_category_id")
 })
 @Entity
 public class Ticket {

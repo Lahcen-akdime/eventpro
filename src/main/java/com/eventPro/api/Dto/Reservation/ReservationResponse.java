@@ -1,7 +1,6 @@
 package com.eventPro.api.Dto.Reservation;
 
 import com.eventPro.api.Entity.Enum.StatutReservation;
-import com.eventPro.api.Entity.Reservation.LigneReservation;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -20,5 +19,5 @@ public record ReservationResponse(
         BigDecimal discountAmount,
         BigDecimal totalAmount,
         String promoCode,
-        List<LigneReservation> lines
+        List<LigneReservationResponse> lines
 ) {}

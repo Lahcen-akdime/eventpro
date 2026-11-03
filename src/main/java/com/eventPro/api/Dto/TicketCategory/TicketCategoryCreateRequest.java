@@ -1,4 +1,3 @@
-
 package com.eventPro.api.Dto.TicketCategory;
 
 import jakarta.validation.constraints.DecimalMin;
@@ -21,6 +20,6 @@ public record TicketCategoryCreateRequest(
         int totalQuantity,
 
         @Positive
-        int quotaMaxParClient
+        int MaxPerClient
 
 ) {}

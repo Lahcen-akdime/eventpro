@@ -16,7 +16,6 @@ public record LigneReservationRequest(
         @NotNull
         @Min(1)
         @Max(100)
-        Integer quantity
-
+        int quantity
 )
 {}

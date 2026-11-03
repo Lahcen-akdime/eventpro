@@ -71,5 +71,12 @@ public class Event {
         state = StatutEvenement.CANCELLED ;
     }
 
+    public boolean isOnSale(LocalDateTime now) {
+        return state == StatutEvenement.PUBLISHED
+                && !now.isBefore(openDate)
+                && !now.isAfter(closeDate)
+                && now.isBefore(endDate);
+    }
+
 
 }

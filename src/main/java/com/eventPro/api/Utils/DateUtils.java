@@ -15,10 +15,6 @@ public class DateUtils {
             throw new InvalidVDataException("La date de début doit etre avant la date de fin");
         }
 
-        if (startDate.isAfter(LocalDateTime.now())) {
-            throw new InvalidVDataException("La fermeture des ventes ne peut pas dépasser le début de l'événement");
-        }
-
     }
 
     public static void isOnSaleToday(Event event){

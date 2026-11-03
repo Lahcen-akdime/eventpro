@@ -2,7 +2,6 @@
 package com.eventPro.api.Controller.Organizer;
 
 import com.eventPro.api.Dto.TicketCategory.TicketCategoryCreateRequest;
-import com.eventPro.api.Dto.TicketCategory.TicketCategoryUpdateRequest;
 import com.eventPro.api.Dto.TicketCategory.TicketCategoryResponse;
 
 import com.eventPro.api.Service.TicketCategoryService;
@@ -10,12 +9,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,11 +24,11 @@ public class OrganizerTicketCategoryController {
     private final TicketCategoryService ticketCategoryService;
 
     // 1. Ajouter une catégorie
-    @PostMapping
-    public TicketCategoryResponse create( @PathVariable UUID eventId,
-                                                          @Valid @RequestBody TicketCategoryCreateRequest request) {
-        return ticketCategoryService.create(eventId, request);
-    }
+    //@PostMapping
+    //public TicketCategoryResponse create( @PathVariable UUID eventId,
+    //                                                      @Valid @RequestBody TicketCategoryCreateRequest request) {
+    //    return ticketCategoryService.create(event, request);
+    //}
 
     /*// 2. Lister les catégories avec leur stock
     @GetMapping

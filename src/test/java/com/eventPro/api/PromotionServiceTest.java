@@ -1,4 +1,4 @@
-package com.eventPro.api.Service;
+package com.eventPro.api;
 
 import com.eventPro.api.Dto.Promotion.PromotionCreateRequest;
 import com.eventPro.api.Dto.Promotion.PromotionResponse;
@@ -7,6 +7,8 @@ import com.eventPro.api.Entity.Promotion;
 import com.eventPro.api.Entity.Enum.TypeReduction;
 import com.eventPro.api.Mapper.PromotionMapper;
 import com.eventPro.api.Repository.PromotionJpaRepository;
+import com.eventPro.api.Service.EventService;
+import com.eventPro.api.Service.PromotionService;
 import com.eventPro.api.Exception.EmailNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

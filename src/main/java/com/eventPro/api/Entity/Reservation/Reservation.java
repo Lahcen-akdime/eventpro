@@ -7,7 +7,11 @@ import com.eventPro.api.Entity.Promotion;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -35,6 +39,19 @@ public class Reservation {
 
     @Enumerated(EnumType.STRING)
     private StatutReservation statutReservation ;
+
+    @Builder.Default
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal subtotal = BigDecimal.ZERO ;
+
+    @Builder.Default
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO ;
+
+    @Builder.Default
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalAmount = BigDecimal.ZERO ;
+
     private String title ;
     private String description ;
     private String place ;
@@ -47,7 +64,38 @@ public class Reservation {
     @JoinColumn(name = "promotion_id",referencedColumnName = "id")
     private Promotion promotion ;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id",referencedColumnName = "id")
     private Event event ;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "reservation")
+    private List<LigneReservation> lines = new ArrayList<>() ;
+
+    public void addLine(LigneReservation line) {
+        lines.add(line);
+        line.setReservation(this); 
+    }
+
+    public void applyPromotion(Promotion promo) {
+        this.promotion = promo;
+        this.discountAmount = promo.calculateDiscount(computeSubtotal());
+    }
+
+    public void calculateTotal() {
+        this.subtotal = computeSubtotal();
+        this.totalAmount = subtotal.subtract(discountAmount)
+                .max(BigDecimal.ZERO)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal computeSubtotal() {
+        return lines.stream()
+                .map(LigneReservation::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public void cancel(){
+        statutReservation = StatutReservation.CANCELLED ;
+    }
 }

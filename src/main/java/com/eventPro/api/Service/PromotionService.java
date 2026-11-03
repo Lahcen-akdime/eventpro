@@ -6,6 +6,8 @@ import com.eventPro.api.Dto.Promotion.PromotionUpdateRequest;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Promotion;
 import com.eventPro.api.Exception.EmailNotFoundException;
+import com.eventPro.api.Exception.InvalidOperationException;
+import com.eventPro.api.Exception.ResourceNotFoundException;
 import com.eventPro.api.Mapper.PromotionMapper;
 import com.eventPro.api.Repository.PromotionJpaRepository;
 import jakarta.transaction.Transactional;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,11 +47,19 @@ public class PromotionService {
     }
 
     public Promotion findById(UUID id){
-        Optional<Promotion> organizer = promotionJpaRepository.findById(id) ;
-        if(!organizer.isPresent()){
-            throw new EmailNotFoundException("The promotion is not found");
+        Optional<Promotion> promotion = promotionJpaRepository.findById(id) ;
+        if(!promotion.isPresent()){
+            throw new ResourceNotFoundException("The promotion is not found");
         }
-        return organizer.get() ;
+        return promotion.get() ;
+    }
+
+    public Promotion findByCode(String code){
+        Optional<Promotion> promotion = promotionJpaRepository.findByCode(code) ;
+        if(!promotion.isPresent()){
+            throw new ResourceNotFoundException("The promotion is not found");
+        }
+        return promotion.get() ;
     }
 
     public PromotionResponse update(UUID id , PromotionUpdateRequest request){
@@ -60,4 +71,28 @@ public class PromotionService {
         promotionJpaRepository.save(promotion) ;
         return promotionMapper.toResponse(promotion) ;
     }
+
+    public void checkIsActive(Promotion promotion){
+        if(!promotion.getActive()){
+            throw new InvalidOperationException("La promotion est annulée") ;
+        }
+    }
+
+    public void checkIsPossibleNow(Promotion promotion){
+        LocalDateTime now = LocalDateTime.now() ;
+        if(promotion.getStartDate().isAfter(now) || promotion.getEndDate().isBefore(now)){
+            throw new InvalidOperationException("La promotion est pas possible a cette date") ;
+        }
+    }
+
+    public void AddNewNumberOfUtilisation(Promotion promotion,Long numberOfUsers){
+       if(promotion.getNombreUtilisations()+numberOfUsers > promotion.getLimiteUtilisation()){
+           promotion.addUtilisation(numberOfUsers);
+       }
+       else {
+           throw new InvalidOperationException("La promotion est pas suffisant pour ce nombre") ;
+       }
+    }
+
+
 }

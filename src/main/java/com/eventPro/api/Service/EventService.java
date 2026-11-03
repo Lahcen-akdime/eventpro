@@ -3,16 +3,20 @@ package com.eventPro.api.Service;
 import com.eventPro.api.Dto.Event.EventCreateRequest;
 import com.eventPro.api.Dto.Event.EventResponse;
 import com.eventPro.api.Dto.Event.EventUpdateRequest;
+import com.eventPro.api.Dto.TicketCategory.TicketCategoryCreateRequest;
 import com.eventPro.api.Entity.Enum.StatutEvenement;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Organizer;
+import com.eventPro.api.Entity.TicketCategory;
 import com.eventPro.api.Exception.EmailNotFoundException;
 import com.eventPro.api.Exception.EventNotFoundException;
 import com.eventPro.api.Exception.InvalidVDataException;
 import com.eventPro.api.Mapper.EventMapper;
+import com.eventPro.api.Mapper.TicketCategoryMapper;
 import com.eventPro.api.Repository.EventJpaRepository;
 import com.eventPro.api.Repository.OrganizerJpaRepository;
 
+import com.eventPro.api.Repository.TicketCategoryRepository;
 import com.eventPro.api.Utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,6 +38,8 @@ public class EventService {
 
     private final EventJpaRepository eventJpaRepository;
     private final OrganizerJpaRepository organizerJpaRepository;
+    private final TicketCategoryService ticketCategoryService ;
+    private final TicketCategoryRepository ticketCategoryRepository ;
     private final EventMapper eventMapper;
 
     @Transactional
@@ -42,7 +50,15 @@ public class EventService {
         Event event = eventMapper.toEntity(request);
         event.setOrganizer(organizer);
         event.setState(StatutEvenement.DRAFT);
-        return eventMapper.toResponse(eventJpaRepository.save(event));
+        List<TicketCategory> tickets = new ArrayList<>() ;
+        for(TicketCategoryCreateRequest ticketCreate : request.categories()){
+            TicketCategory ticket = ticketCategoryService.create(event ,ticketCreate) ;
+            tickets.add(ticket) ;
+        }
+        event.setTickets(tickets);
+        Event savededEvent = eventJpaRepository.save(event);
+        ticketCategoryRepository.saveAll(tickets) ;
+        return eventMapper.toResponse(savededEvent) ;
     }
 
     @Transactional(readOnly = true)

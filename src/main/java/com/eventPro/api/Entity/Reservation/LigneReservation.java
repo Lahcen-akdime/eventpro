@@ -1,5 +1,6 @@
 package com.eventPro.api.Entity.Reservation;
 
+import com.eventPro.api.Entity.TicketCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +20,7 @@ public class LigneReservation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
 
-    private Long quantite ;
+    private int quantite ;
 
     @Column(precision = 12, scale = 2)
     private BigDecimal unitPrice ;
@@ -30,5 +31,9 @@ public class LigneReservation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id" , referencedColumnName = "id")
     private Reservation reservation ;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ticket_category_id", nullable = false)
+    private TicketCategory ticketCategory ;
 
 }
