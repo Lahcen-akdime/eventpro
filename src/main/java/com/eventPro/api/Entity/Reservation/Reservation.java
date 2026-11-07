@@ -98,4 +98,9 @@ public class Reservation {
     public void cancel(){
         statutReservation = StatutReservation.CANCELLED ;
     }
+
+    public void confirm(){
+        statutReservation = StatutReservation.CONFIRMED ;
+    }
+
 }

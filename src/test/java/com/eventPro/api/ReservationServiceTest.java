@@ -7,6 +7,7 @@ import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.TicketCategory;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import com.eventPro.api.Entity.Reservation.Reservation;
+import com.eventPro.api.Exception.InsufficientStockException;
 import com.eventPro.api.Mapper.ReservationMapper;
 import com.eventPro.api.Repository.ReservationJpaRepository;
 import com.eventPro.api.Repository.ReservationLineJpaRepository;
@@ -45,7 +46,7 @@ import java.util.UUID;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ReservationServiceTest {
 
-    private static final Instant NOW_INSTANT = Instant.parse("2026-11-03T10:00:00Z");
+    private static final Instant NOW_INSTANT = Instant.parse("2026-11-04T12:40:00Z");
     //private static final LocalDateTime NOW  = LocalDateTime.ofInstant(NOW_INSTANT,ZoneOffset.UTC) ;
 
     @Mock ReservationJpaRepository reservationJpaRepository ;
@@ -111,12 +112,11 @@ public class ReservationServiceTest {
     void createReservationWithInsuffisantStockTest(){
         try(MockedStatic<UserService> mockedUser = Mockito.mockStatic(UserService.class)){
             mockedUser.when(()->userService.getAuthenticatedEmail(any())).thenReturn("client@mail.com");
-            LigneReservationRequest line = new LigneReservationRequest(ticketCategory.getId(), 20);
+            LigneReservationRequest line = new LigneReservationRequest(ticketCategory.getId(), 200);
             ReservationCreateRequest request = new ReservationCreateRequest(eventId,List.of(line),null) ;
-            assertThrows(RuntimeException.class,()->reservationService.create(request, null)) ;
+            assertThrows(InsufficientStockException.class,()->reservationService.create(request, null)) ;
             verify(reservationJpaRepository,never()).save(any(Reservation.class)) ;
             assertEquals(0,ticketCategory.getReservedPlaces()) ;
-            
         }
     }
 

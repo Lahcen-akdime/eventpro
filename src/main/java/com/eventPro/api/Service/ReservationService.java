@@ -3,9 +3,11 @@ package com.eventPro.api.Service;
 import com.eventPro.api.Dto.Reservation.ReservationCreateRequest;
 import com.eventPro.api.Dto.Reservation.ReservationResponse;
 import com.eventPro.api.Entity.*;
+import com.eventPro.api.Entity.Enum.StatutPaiement;
 import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import com.eventPro.api.Entity.Reservation.Reservation;
+import com.eventPro.api.Exception.InsufficientStockException;
 import com.eventPro.api.Exception.InvalidOperationException;
 import com.eventPro.api.Exception.InvalidVDataException;
 import com.eventPro.api.Mapper.ReservationMapper;
@@ -71,6 +73,9 @@ public class ReservationService {
             long quantity = line.quantity();
             long alreadyTaken = reservationLineJpaRepository
                     .sumActiveQuantity(client.getId(), category.getId(),ACTIVE_STATUSES);
+            if(quantity > category.getAvailablePlaces()){
+                throw new InsufficientStockException("quantite est plus que la capacite du event");
+            }
             if (alreadyTaken + quantity > category.getMaxPerClient()) {
                 throw new InvalidOperationException("le client veux plus que possible ");
             }
@@ -110,6 +115,14 @@ public class ReservationService {
             reservation.applyPromotion(promotion);
         }
         reservation.calculateTotal();
+        // Pending Paiment 
+        Paiment paiement = Paiment.builder()
+                .reference(ReferenceGenerator.getNewReference())
+                .amount(reservation.getDiscountAmount())
+                .paidAt(now)
+                .statut(StatutPaiement.PENDING)
+                .reservation(reservation)
+                .build();
         // save
         Reservation saved = reservationJpaRepository.save(reservation);
         return reservationMapper.toResponse(saved);
@@ -150,6 +163,11 @@ public class ReservationService {
     @Transactional
     public Page<ReservationResponse> getList(@PageableDefault(size = 3) Pageable pageable){
         return reservationJpaRepository.findAll(pageable).map(reservationMapper::toResponse) ;
+    }
+
+    public Optional<Reservation> findByIdForUpdate(UUID reservationId){
+        Reservation reservation = reservationJpaRepository.findByIdForUpdate(reservationId) ;
+        return Optional.of(reservation) ;
     }
 
 }

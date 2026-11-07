@@ -12,34 +12,38 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@Table(name = "paiments")
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "paiments",indexes = {@Index(name = "reservation_id", columnList = "reservation_id")})
 public class Paiment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
 
+    @Column(unique = true,length = 64)
+    @NotNull
+    private String idempotency_key ;
+
     @Column(unique = true)
     @NotNull
-    private String key ;
+    private String reference ;
 
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 12, scale = 2,nullable = false)
     @NotNull
-    private BigDecimal montant ;
+    private BigDecimal amount ;
 
     @NotNull
-    private LocalDateTime paymentDate ;
+    private LocalDateTime paidAt ;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
-    private StatutPaiement paymentStates ;
+    @Column(nullable = false)
+    private StatutPaiement statut ;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id" , referencedColumnName = "id")
+    @JoinColumn(name = "reservation_id" , referencedColumnName = "id",nullable = false)
     @NotNull
     private Reservation reservation ;
 

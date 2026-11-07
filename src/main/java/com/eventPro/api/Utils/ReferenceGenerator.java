@@ -10,7 +10,7 @@ import java.util.UUID;
 public class ReferenceGenerator {
 
     public static String getNewReference(){
-        return "Ref-"+ UUID.randomUUID().toString().substring(0,5) ;
+        return "Ref-"+ UUID.randomUUID().toString().substring(0,15) ;
     }
 
 }

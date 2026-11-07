@@ -11,6 +11,8 @@ import com.eventPro.api.Entity.Enum.Role;
 import com.eventPro.api.Mapper.ClientMapper;
 import com.eventPro.api.Repository.ClientJpaRepository;
 import com.eventPro.api.Repository.UserJpaRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -99,6 +101,15 @@ public class ClientService {
 
     public Client findById(UUID id){
         Optional<Client> client = clientJpaRepository.findById(id) ;
+        if(!client.isPresent()){
+            throw new EmailNotFoundException("The client is not found");
+        }
+        return client.get() ;
+    }
+
+    public Client getAuthaunticatedClient(HttpServletRequest request){
+        String email = userService.getAuthenticatedEmail(request);
+        Optional<Client> client = clientJpaRepository.findByEmail(email) ;
         if(!client.isPresent()){
             throw new EmailNotFoundException("The client is not found");
         }

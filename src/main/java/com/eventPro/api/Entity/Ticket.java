@@ -2,32 +2,36 @@ package com.eventPro.api.Entity;
 
 import com.eventPro.api.Entity.Enum.TicketStatus;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
+import com.eventPro.api.Exception.InvalidOperationException;
+import com.eventPro.api.Exception.TicketAlreadyUsedException;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
-@Table(name = "tickets",indexes = {@Index(columnList = "reservation_line_id"), @Index(columnList = "ticket_category_id")
-})
+@Builder
+@Table(name = "tickets",indexes = {@Index(columnList = "reservation_line_id"), @Index(columnList = "ticket_category_id")})
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id ;
 
-    @Column(unique = false)
+    @Column(unique = true)
     private String code ;
 
-    private LocalDateTime dateEmission ;
+    private LocalDateTime issuedAt ;
 
-    private LocalDateTime dateControle  ;
+    private LocalDateTime checkedAt  ;
 
     @Enumerated(EnumType.STRING)
-    private TicketStatus ticketState ;
+    @Column(nullable = false)
+    @Builder.Default
+    private TicketStatus status = TicketStatus.VALID ;
 
     @JoinColumn(name = "ticket_category_id" , referencedColumnName = "id",nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,5 +39,30 @@ public class Ticket {
 
     @JoinColumn(name = "reservation_line_id" , referencedColumnName = "id",nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private LigneReservation ligneReservation ;
+    private LigneReservation reservationLine ;
+
+    public void check(LocalDateTime now){
+        if(status.equals(TicketStatus.USED)){
+            throw new TicketAlreadyUsedException("Ticket already used") ;
+        }
+        if (status != TicketStatus.VALID){
+            throw new InvalidOperationException("Ticket invalide") ;
+        }
+        this.status = TicketStatus.USED ;
+        this.checkedAt = now ;
+    }
+
+    public void cancel(){
+        if(status.equals(TicketStatus.CANCELLED)){
+            return ;
+        } 
+        if(status.equals(TicketStatus.USED)){
+            throw new TicketAlreadyUsedException("Le ticket est deja utilisé") ;
+        }
+        status = TicketStatus.CANCELLED ;
+    }
+
+    
+
+
 }
