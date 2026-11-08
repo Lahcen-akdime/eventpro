@@ -61,4 +61,8 @@ public class TicketCategory {
         reservedPlaces -= quantity;
     }
 
+    public void refund(int quantite){
+        soldPlaces -= quantite ;
+    }
+
 }
