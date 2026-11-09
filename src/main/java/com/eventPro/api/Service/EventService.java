@@ -4,6 +4,7 @@ import com.eventPro.api.Dto.Event.EventCreateRequest;
 import com.eventPro.api.Dto.Event.EventResponse;
 import com.eventPro.api.Dto.Event.EventUpdateRequest;
 import com.eventPro.api.Dto.TicketCategory.TicketCategoryCreateRequest;
+import com.eventPro.api.Dto.TicketCategory.TicketCategoryResponse;
 import com.eventPro.api.Entity.Enum.StatutEvenement;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Organizer;
@@ -41,6 +42,7 @@ public class EventService {
     private final TicketCategoryService ticketCategoryService ;
     private final TicketCategoryRepository ticketCategoryRepository ;
     private final EventMapper eventMapper;
+
 
     @Transactional
     public EventResponse create(EventCreateRequest request, String email) {
@@ -112,6 +114,7 @@ public class EventService {
     public Event findEvent(UUID id) {
         return eventJpaRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Événement introuvable"));
     }
+
 
 
 }

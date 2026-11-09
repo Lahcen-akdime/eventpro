@@ -25,7 +25,7 @@ public class Paiment {
 
     @Column(unique = true,length = 64)
     @NotNull
-    private String idempotency_key ;
+    private String idempotencyKey ;
 
     @Column(unique = true)
     @NotNull
@@ -46,7 +46,6 @@ public class Paiment {
     @JoinColumn(name = "reservation_id" , referencedColumnName = "id",nullable = false)
     @NotNull
     private Reservation reservation ;
-
 
 
 }

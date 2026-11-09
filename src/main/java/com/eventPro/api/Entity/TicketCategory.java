@@ -61,8 +61,25 @@ public class TicketCategory {
         reservedPlaces -= quantity;
     }
 
-    public void refund(int quantite){
-        soldPlaces -= quantite ;
+    public void confirmSale(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("La quantite doit etre positive");
+        }
+        if (quantity > reservedPlaces) {
+            throw new IllegalStateException("Impossible de confirmer plus de places reservées que disponibles");
+        }
+        reservedPlaces -= quantity;
+        soldPlaces += quantity;
+    }
+
+    public void refund(int quantity){
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("La quantite doit etre positive");
+        }
+        if (quantity > soldPlaces) {
+            throw new IllegalStateException("Impossible de rembourser plus de places vendues");
+        }
+        soldPlaces -= quantity;
     }
 
 }

@@ -10,6 +10,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
+@Setter
 @Builder
 @Table(name = "tickets",indexes = {@Index(columnList = "reservation_line_id"), @Index(columnList = "ticket_category_id")})
 @Entity
@@ -62,7 +64,8 @@ public class Ticket {
         status = TicketStatus.CANCELLED ;
     }
 
-    
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id",referencedColumnName = "id")
+    private Client client ;
 
 }

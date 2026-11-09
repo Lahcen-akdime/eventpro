@@ -3,9 +3,7 @@ package com.eventPro.api.Entity;
 import com.eventPro.api.Entity.Enum.StatutRemboursement;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.Builder.Default;
 
 import java.math.BigDecimal;
@@ -16,9 +14,14 @@ import org.hibernate.annotations.Check;
 
 @Getter
 @Setter
-@Table(name = "remboursements")
+@Table(
+    name = "remboursements",
+    uniqueConstraints = @UniqueConstraint(columnNames = "paiment_id")
+)
 @Entity
-@Builder 
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Remboursement {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,7 +30,7 @@ public class Remboursement {
     @Column(precision = 12, scale = 2,nullable = false)
     private BigDecimal amount ;
 
-    @Column(length = 255,nullable = false)
+    @Column(length = 255)
     private String motif ;
 
     @Column(nullable = false)
@@ -43,15 +46,15 @@ public class Remboursement {
     private Paiment paiment ;
 
     public void approuver(){
-        if(statut.equals(StatutRemboursement.APPROVED)){
-            throw new IllegalStateException("Le remboursement est approuve deja ");
+        if(statut != StatutRemboursement.PENDING){
+            throw new IllegalStateException("Seul un remboursement en attente peut etre approuve");
         }
         statut = StatutRemboursement.APPROVED ;
     }
 
     public void refuser(){
-        if(statut.equals(StatutRemboursement.REJECTED)){
-            throw new IllegalStateException("Le remboursement est rejected deja ");
+        if(statut != StatutRemboursement.PENDING){
+            throw new IllegalStateException("Seul un remboursement en attente peut etre refuse");
         }
         statut = StatutRemboursement.REJECTED ;
     }

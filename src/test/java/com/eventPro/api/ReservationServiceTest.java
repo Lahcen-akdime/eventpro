@@ -7,6 +7,7 @@ import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.TicketCategory;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import com.eventPro.api.Entity.Reservation.Reservation;
+import com.eventPro.api.Config.ReservationProperties;
 import com.eventPro.api.Exception.InsufficientStockException;
 import com.eventPro.api.Mapper.ReservationMapper;
 import com.eventPro.api.Repository.ReservationJpaRepository;
@@ -35,6 +36,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -57,6 +59,7 @@ public class ReservationServiceTest {
     @Mock EventService eventService ;
     @Mock ReservationMapper reservationMapper ;
     @Mock ReservationLineJpaRepository reservationLineJpaRepository ;
+    @Mock ReservationProperties reservationProperties ;
     @Mock private Clock clock ;
 
     @InjectMocks ReservationService reservationService ;
@@ -71,6 +74,7 @@ public class ReservationServiceTest {
     void init(){
        when(clock.instant()).thenReturn(NOW_INSTANT) ;
        when(clock.getZone()).thenReturn(ZoneOffset.UTC) ;
+       when(reservationProperties.holdDuration()).thenReturn(Duration.ofMinutes(10));
 
        client = mock(Client.class) ;
        event = mock(Event.class) ;

@@ -5,11 +5,13 @@ import com.eventPro.api.Dto.Promotion.PromotionResponse;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Promotion;
 import com.eventPro.api.Entity.Enum.TypeReduction;
+import com.eventPro.api.Exception.ResourceNotFoundException;
 import com.eventPro.api.Mapper.PromotionMapper;
 import com.eventPro.api.Repository.PromotionJpaRepository;
 import com.eventPro.api.Service.EventService;
 import com.eventPro.api.Service.PromotionService;
 import com.eventPro.api.Exception.EmailNotFoundException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -78,7 +80,7 @@ class PromotionServiceTest {
     void findByIdExceptionTest() {
         UUID promotionId = UUID.randomUUID();
         when(promotionJpaRepository.findById(promotionId)).thenReturn(Optional.empty());
-        assertThrows(EmailNotFoundException.class, () -> promotionService.findById(promotionId));
+        assertThrows(ResourceNotFoundException.class, () -> promotionService.findById(promotionId));
         verify(promotionJpaRepository).findById(promotionId);
     }
 }

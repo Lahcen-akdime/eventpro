@@ -25,7 +25,6 @@ public class UserService {
     private final UserJpaRepository userJpaRepository;
     private final PasswordEncoder passwordEncoder ;
     private final UserMapper userMapper ;
-    private static String authEmail  ;
 
     public Optional<User> findByEmail(String email){
         return userJpaRepository.findByEmail(email) ;
@@ -57,8 +56,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, " connecter s'il vous plis");
         }
 
-        authEmail = (String) session.getAttribute("authEmail");
-        return authEmail ;
+        return (String) session.getAttribute("authEmail");
     }
 
     public static void saveEmailInSession(String email , HttpServletRequest servletRequest){
@@ -66,9 +64,9 @@ public class UserService {
         session.setAttribute("authEmail",email);
     }
 
-    public void checkIsActive(){
-        var user = userJpaRepository.findByEmailIgnoreCase(authEmail) ;
-        if(!user.get().getIsActive()){
+    public void checkIsActive(String email){
+        var user = userJpaRepository.findByEmailIgnoreCase(email) ;
+        if(user.isEmpty() || !user.get().getIsActive()){
             throw new AccessDeniedException("Your account is desactivated") ;
         }
     }

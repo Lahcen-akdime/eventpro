@@ -224,5 +224,7 @@ src/main/java/com/eventpro/
 
 ## 14. Automatisation & Stratégie de tests
 
-- **Tâche planifiée (`@Scheduled`) :** Scrute les réservations `PENDING_PAYMENT` dépassant 10 minutes, les passe à `EXPIRED` et restitue les stocks.
-- **Tests unitaires & Intégration :** Validation avec Mockito (calculs de prix, remises, remboursements) et Testcontainers PostgreSQL (concurrence sur la dernière place). Lancement via `mvn test`.
+- **Tâche planifiée (`@Scheduled`) :** Vérifie les réservations `PENDING_PAYMENT` expirées toutes les 60 secondes (intervalle configurable avec `eventpro.reservation.expiration-scan-interval`, en millisecondes), les passe à `EXPIRED` et restitue les stocks dans une transaction. La réservation et ses catégories de billets sont verrouillées avant modification.
+- **Tests unitaires :** JUnit 5 et Mockito valident l'expiration et la restitution du stock, les calculs de prix et de remises, ainsi que l'idempotence des demandes de remboursement.
+- **Test d'intégration PostgreSQL :** Testcontainers vérifie que deux réservations concurrentes ne peuvent pas vendre deux fois la dernière place. Docker doit être disponible pour exécuter ce test ; il est ignoré lorsque Docker n'est pas accessible.
+- **Exécution :** `mvn test` (ou `.\mvnw.cmd test` sous Windows).

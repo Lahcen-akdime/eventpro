@@ -62,6 +62,12 @@ public class PromotionService {
         return promotion.get() ;
     }
 
+    public Promotion findApplicablePromotion(String code, LocalDateTime now, Event event) {
+        return promotionJpaRepository.findByCode(code)
+                .filter(promotion -> promotion.isValidAt(now) && promotion.isApplicableTo(event))
+                .orElseThrow(() -> new InvalidOperationException("Code promo invalide"));
+    }
+
     public PromotionResponse update(UUID id , PromotionUpdateRequest request){
         Promotion promotion = findById(id) ;
         promotion.setStartDate(request.startDate());

@@ -3,6 +3,7 @@ package com.eventPro.api.Controller;
 import com.eventPro.api.Dto.Event.EventCreateRequest;
 import com.eventPro.api.Dto.Event.EventResponse;
 import com.eventPro.api.Dto.Event.EventUpdateRequest;
+import com.eventPro.api.Dto.TicketCategory.TicketCategoryResponse;
 import com.eventPro.api.Service.EventService;
 
 import com.eventPro.api.Service.UserService;
@@ -20,6 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -66,4 +68,5 @@ public class EventController {
     public EventResponse cancel(@PathVariable UUID id) {
         return eventService.cancel(id);
     }
+
 }

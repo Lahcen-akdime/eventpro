@@ -4,6 +4,8 @@ import com.eventPro.api.Entity.Client;
 import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Promotion;
+import com.eventPro.api.Exception.InvalidOperationException;
+import com.eventPro.api.Exception.ReservationExpiredException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,32 +31,25 @@ public class Reservation {
     @Column(unique = true)
     private String reference ;
 
-    private LocalDateTime dateCreation = LocalDateTime.now() ;
+    @Builder.Default
+    private LocalDateTime dateCreation = LocalDateTime.now();
 
-    private LocalDateTime dateExpiration  ;
-
-    private LocalDateTime startEvent ;
-
-    private LocalDateTime endEvent ;
+    private LocalDateTime dateExpiration;
 
     @Enumerated(EnumType.STRING)
-    private StatutReservation statutReservation ;
+    private StatutReservation statutReservation;
 
     @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal = BigDecimal.ZERO ;
+    private BigDecimal subtotal = BigDecimal.ZERO;
 
     @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO ;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO ;
-
-    private String title ;
-    private String description ;
-    private String place ;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id" , referencedColumnName = "id")
@@ -69,8 +64,10 @@ public class Reservation {
     private Event event ;
 
     @Builder.Default
-    @OneToMany(mappedBy = "reservation")
-    private List<LigneReservation> lines = new ArrayList<>() ;
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LigneReservation> lines = new ArrayList<>();
+
+
 
     public void addLine(LigneReservation line) {
         lines.add(line);
@@ -95,13 +92,39 @@ public class Reservation {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public void cancel(){
-        statutReservation = StatutReservation.CANCELLED ;
+    public boolean isExpiredAt(LocalDateTime now) {
+        return dateExpiration != null && !now.isBefore(dateExpiration);
     }
 
-    public void confirm(){
-        statutReservation = StatutReservation.CONFIRMED ;
+    public void expire() {
+        if (statutReservation != StatutReservation.PENDING_PAYMENT) {
+            return;
+        }
+        statutReservation = StatutReservation.EXPIRED;
     }
 
+    public void refund() {
+        if (statutReservation != StatutReservation.CONFIRMED) {
+            throw new IllegalStateException("Reservation must be confirmed before refund");
+        }
+        statutReservation = StatutReservation.REFUNDED;
+    }
+
+    public void cancel() {
+        if (statutReservation != StatutReservation.PENDING_PAYMENT) {
+            throw new InvalidOperationException("Seule une reservation en attente peut etre annulee");
+        }
+        statutReservation = StatutReservation.CANCELLED;
+    }
+
+    public void confirm(LocalDateTime now) {
+        if (statutReservation != StatutReservation.PENDING_PAYMENT) {
+            throw new InvalidOperationException("La reservation doit etre en attente de paiement");
+        }
+        if (isExpiredAt(now)) {
+            throw new ReservationExpiredException("La reservation a expire");
+        }
+        statutReservation = StatutReservation.CONFIRMED;
+    }
 
 }

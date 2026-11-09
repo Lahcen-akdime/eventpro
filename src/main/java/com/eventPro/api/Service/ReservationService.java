@@ -2,8 +2,8 @@ package com.eventPro.api.Service;
 
 import com.eventPro.api.Dto.Reservation.ReservationCreateRequest;
 import com.eventPro.api.Dto.Reservation.ReservationResponse;
+import com.eventPro.api.Config.ReservationProperties;
 import com.eventPro.api.Entity.*;
-import com.eventPro.api.Entity.Enum.StatutPaiement;
 import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import com.eventPro.api.Entity.Reservation.Reservation;
@@ -16,17 +16,16 @@ import com.eventPro.api.Repository.ReservationLineJpaRepository;
 import com.eventPro.api.Repository.TicketCategoryRepository;
 import com.eventPro.api.Utils.ReferenceGenerator;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -44,7 +43,7 @@ public class ReservationService {
     private final EventService eventService ;
     private final ReservationMapper reservationMapper ;
     private final ReservationLineJpaRepository reservationLineJpaRepository;
-    private static final Duration HOLD_DURATION = Duration.ofMinutes(10);
+    private final ReservationProperties reservationProperties;
     private static final List<StatutReservation> ACTIVE_STATUSES =
             List.of(StatutReservation.PENDING_PAYMENT, StatutReservation.CONFIRMED);
     private final Clock clock;
@@ -54,7 +53,7 @@ public class ReservationService {
         // User get and check
         String email = UserService.getAuthenticatedEmail(servletRequest) ;
         Client client = clientService.findByEmail(email) ;
-        userService.checkIsActive();
+        userService.checkIsActive(email);
         // Current time
         LocalDateTime now = LocalDateTime.now(clock);
         // Event get and check
@@ -63,8 +62,16 @@ public class ReservationService {
             throw new InvalidOperationException("La vente n'est pas ouverte pour ce event");
         }
         List<UUID> ids = request.lines().stream().map(line -> line.categoryId()).toList();
+        if (new HashSet<>(ids).size() != ids.size()) {
+            throw new InvalidVDataException("Une seule ligne est autorisee par categorie");
+        }
         // lock categorys
         List<TicketCategory> locked = ticketCategoryRepository.findAllByIdInOrderByIdForUpdate(ids);
+        if (locked.size() != ids.size()
+                || locked.stream().anyMatch(category -> category.getEvent() == null
+                || !event.getId().equals(category.getEvent().getId()))) {
+            throw new InvalidVDataException("Categories invalides pour cet evenement");
+        }
         Map<UUID, TicketCategory> categories = locked.stream()
                 .collect(Collectors.toMap(TicketCategory::getId, Function.identity()));
         // verifier quota par client
@@ -87,7 +94,7 @@ public class ReservationService {
                 .client(client)
                 .event(event)
                 .dateCreation(now)
-                .dateExpiration(now.plus(HOLD_DURATION))
+                .dateExpiration(now.plus(reservationProperties.holdDuration()))
                 .build();
         // add lines to reservation
         for (var line : request.lines()) {
@@ -104,25 +111,11 @@ public class ReservationService {
         }
         //  code promo
         if (request.promoCode() != null && !request.promoCode().isBlank()) {
-
-            Promotion promotion = promotionService.findByCode(request.promoCode().trim()) ;
-                    if(!promotion.isValidAt(now) ){
-                        throw new InvalidOperationException("Code promo invalide a "+now) ;
-                    } else if (!promotion.isApplicableTo(event)) {
-                        throw new InvalidOperationException("Code promo invalide a ce event "+event.getTitle()) ;
-                    }
-            promotion.addUtilisation(1L);
+            Promotion promotion = promotionService.findApplicablePromotion(
+                    request.promoCode().trim(), now, event);
             reservation.applyPromotion(promotion);
         }
         reservation.calculateTotal();
-        // Pending Paiment 
-        Paiment paiement = Paiment.builder()
-                .reference(ReferenceGenerator.getNewReference())
-                .amount(reservation.getDiscountAmount())
-                .paidAt(now)
-                .statut(StatutPaiement.PENDING)
-                .reservation(reservation)
-                .build();
         // save
         Reservation saved = reservationJpaRepository.save(reservation);
         return reservationMapper.toResponse(saved);
@@ -166,8 +159,8 @@ public class ReservationService {
     }
 
     public Optional<Reservation> findByIdForUpdate(UUID reservationId){
-        Reservation reservation = reservationJpaRepository.findByIdForUpdate(reservationId) ;
-        return Optional.of(reservation) ;
+        Optional<Reservation> reservation = reservationJpaRepository.findByIdForUpdate(reservationId) ;
+        return reservation ;
     }
 
 }

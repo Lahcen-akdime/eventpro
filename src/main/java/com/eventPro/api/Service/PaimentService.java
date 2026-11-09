@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor 
 public class PaimentService {
 
-    public ReservationService reservationService ;
+    private final ReservationService reservationService ;
     private final Clock clock ;
     private final ClientService clientService ;
     private final PaimentJpaRepository paimentJpaRepository ;
@@ -54,36 +54,45 @@ public class PaimentService {
     public PaimentResponse pay(UUID reservationId, PaimentRequest request,HttpServletRequest httpRequest){
 
         LocalDateTime now = LocalDateTime.now(clock) ;
+        Client client = clientService.getAuthaunticatedClient(httpRequest);
+        Reservation reservation = reservationJpaRepository.findByIdForUpdate(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("La reservation est pas existe"));
 
-        Reservation reservation = reservationService.findByIdForUpdate(reservationId).orElseThrow(()->new ResourceNotFoundException("La reservation est pas existe"));
-
-        Client client =  clientService.getAuthaunticatedClient(httpRequest);
-
-        if(!reservation.getClient().equals(client)){
+        if(!reservation.getClient().getId().equals(client.getId())){
             throw new AccessDeniedException("Cette reservation est pas la tinne") ;
         }
 
         Paiment existingPaiment = paimentJpaRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null) ;
-
-        if(existingPaiment != null){
-                throw new IdempotencyConflictException("Cette cle d'idempotence est utilisee pour une autre demande") ;
+        if (existingPaiment != null) {
+            if (existingPaiment.getReservation().getId().equals(reservationId)
+                    && existingPaiment.getAmount().compareTo(request.amount()) == 0) {
+                return paiementMapper.toResponse(existingPaiment,
+                        ticketJpaRepository.findAllByReservationLine_Reservation_Id(reservationId));
+            }
+            throw new IdempotencyConflictException("Cette cle d'idempotence est utilisee pour une autre demande") ;
         }
 
-    
-        if(reservation.getDateExpiration().isBefore(now)){
-            throw new InvalidOperationException("La reservation est expiré") ;
+        if (reservation.getStatutReservation() != StatutReservation.PENDING_PAYMENT) {
+            throw new InvalidOperationException("La reservation doit etre en attente de paiement");
+        }
+        if (reservation.isExpiredAt(now)) {
+            throw new com.eventPro.api.Exception.ReservationExpiredException("La reservation est expiré");
         }
         if (request.amount().compareTo(reservation.getTotalAmount()) != 0) {
             throw new InvalidVDataException("Le montant ne correspond pas au total de la réservation");
         }
-        Paiment paiement = Paiment.builder()
-                .reference("PAY-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase())
-                .idempotency_key(request.idempotencyKey())
-                .amount(request.amount())
-                .paidAt(now)
-                .statut(StatutPaiement.SUCCESS)
-                .reservation(reservation)
-                .build();
+
+        if (request.idempotencyKey().startsWith("FAIL")) {
+            Paiment failed = Paiment.builder()
+                    .reference("PAY-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase())
+                    .idempotencyKey(request.idempotencyKey())
+                    .amount(request.amount())
+                    .paidAt(now)
+                    .statut(StatutPaiement.FAILED)
+                    .reservation(reservation)
+                    .build();
+            return paiementMapper.toResponse(paimentJpaRepository.save(failed), List.of());
+        }
 
         List<UUID> categoryIds = reservation.getLines().stream()
                 .map(line -> line.getTicketCategory().getId())
@@ -95,9 +104,21 @@ public class PaimentService {
         }
         Map<UUID, TicketCategory> categories = locked.stream()
                 .collect(Collectors.toMap(TicketCategory::getId, Function.identity()));
- 
-        reservation.confirm();
- 
+
+        for (LigneReservation line : reservation.getLines()) {
+            categories.get(line.getTicketCategory().getId()).confirmSale(line.getQuantite());
+        }
+
+        Paiment paiement = Paiment.builder()
+                .reference("PAY-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase())
+                .idempotencyKey(request.idempotencyKey())
+                .amount(request.amount())
+                .paidAt(now)
+                .statut(StatutPaiement.SUCCESS)
+                .reservation(reservation)
+                .build();
+
+        reservation.confirm(now);
         List<Ticket> tickets = new ArrayList<>();
         for (LigneReservation line : reservation.getLines()) {
             long quantity = line.getQuantite();
@@ -108,14 +129,14 @@ public class PaimentService {
                         .status(TicketStatus.VALID)
                         .reservationLine(line)
                         .ticketCategory(categories.get(line.getTicketCategory().getId()))
+                        .client(client)
                         .build());
             }
         }
         List<Ticket> finalTickets = ticketJpaRepository.saveAll(tickets);
- 
-        reservationJpaRepository.save(reservation);
         Paiment finalSaved = paimentJpaRepository.save(paiement);
-        return paiementMapper.toResponse(finalSaved,finalTickets);
+        reservationJpaRepository.save(reservation);
+        return paiementMapper.toResponse(finalSaved, finalTickets);
     }
 
     public PaimentResponse getById(UUID paimentId, HttpServletRequest httpRequest){
