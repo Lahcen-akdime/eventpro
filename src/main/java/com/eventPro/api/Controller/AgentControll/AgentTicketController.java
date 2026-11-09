@@ -3,6 +3,7 @@ package com.eventPro.api.Controller.AgentControll;
 import com.eventPro.api.Dto.Ticket.TicketScanRequest;
 import com.eventPro.api.Dto.Ticket.TicketVerificationResponse;
 import com.eventPro.api.Dto.Ticket.TicketVerifyRequest;
+import com.eventPro.api.Service.TicketService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +17,8 @@ import java.util.UUID;
 @RequestMapping("/api/v1/events/{eventId}/tickets")
 public class AgentTicketController {
 
-    /*private final TicketService ticketService;
+    private final TicketService ticketService;
 
-    // 3. Vérifier un billet
     @PostMapping("/verify")
     public ResponseEntity<TicketVerificationResponse> verify(
             @PathVariable UUID eventId,
@@ -29,7 +29,6 @@ public class AgentTicketController {
         );
     }
 
-    // 4. Composter un billet
     @PostMapping("/scan")
     public ResponseEntity<TicketVerificationResponse> scan(
             @PathVariable UUID eventId,
@@ -38,5 +37,5 @@ public class AgentTicketController {
         return ResponseEntity.ok(
                 ticketService.scan(eventId, request.code())
         );
-    }*/
+    }
 }

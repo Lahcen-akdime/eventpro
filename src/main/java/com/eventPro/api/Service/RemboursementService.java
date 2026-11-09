@@ -18,7 +18,6 @@ import com.eventPro.api.Repository.RemboursementJpaRepository;
 import com.eventPro.api.Repository.ReservationJpaRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -48,11 +47,11 @@ public class RemboursementService {
         Client client = clientService.getAuthaunticatedClient(httpServlet);
         String motif = request.motif();
  
-        Reservation reservation = reservationJpaRepository.findByIdForUpdate(reservationId);
-        if(reservation == null){
+        Optional<Reservation> reservation = reservationJpaRepository.findByIdForUpdate(reservationId);
+        if(!reservation.isPresent()){
             throw new ResourceNotFoundException("Reservation not found");
         }
-        if (!reservation.getClient().getId().equals(client.getId())) {
+        if (!reservation.get().getClient().getId().equals(client.getId())) {
             throw new InvalidVDataException("reservation not found");
         }
  
@@ -60,12 +59,12 @@ public class RemboursementService {
                 .findByReservationIdAndStatut(reservationId, StatutPaiement.SUCCESS)
                 .orElseThrow(() -> new InvalidOperationException("Réservation non remboursable"));
  
-        Remboursement existing = remboursementJpaRepository.findByIdPaimentId(paiement.getId()).orElse(null);
+        Remboursement existing = remboursementJpaRepository.findByPaimentId(paiement.getId()).orElse(null);
         if (existing != null) {
             return remboursementMapper.toResponse(existing);
         }
  
-        if (reservation.getStatutReservation() != StatutReservation.CONFIRMED) {
+        if (reservation.get().getStatutReservation() != StatutReservation.CONFIRMED) {
             throw new InvalidOperationException("Reservation non remboursable");
         }
  
@@ -91,7 +90,8 @@ public class RemboursementService {
 
     public Page<RemboursementResponse> list(Pageable pageable,HttpServletRequest httpServlet){
         Client client =  clientService.getAuthaunticatedClient(httpServlet) ;
-        Page<Remboursement> remboursments = remboursementJpaRepository.findByClientId(client.getId(),pageable) ;
+        Page<Remboursement> remboursments =
+                remboursementJpaRepository.findByPaiment_Reservation_Client_Id(client.getId(),pageable);
         return remboursments.map(remboursementMapper::toResponse);
     }
 

@@ -1,6 +1,5 @@
 package com.eventPro.api.Repository;
 
-import com.eventPro.api.Entity.Paiment;
 import com.eventPro.api.Entity.Remboursement;
 
 import org.springframework.data.domain.Page;
@@ -12,8 +11,8 @@ import java.util.UUID;
 
 public interface RemboursementJpaRepository extends JpaRepository<Remboursement,UUID> {
 
-    Page<Remboursement> findByClientId(UUID clientId , Pageable pageable) ;
+    Page<Remboursement> findByPaiment_Reservation_Client_Id(UUID clientId, Pageable pageable);
 
-    Optional<Remboursement> findByIdPaimentId(UUID id);
+    Optional<Remboursement> findByPaimentId(UUID paimentId);
 
 }

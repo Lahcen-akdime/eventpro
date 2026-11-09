@@ -1,33 +1,25 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
+# Ce qui n'a rien à faire dans l'image (et alourdit ou expose inutilement le contexte)
+.git
+.gitignore
+.gitattributes
+.github
 .idea
-*.iws
+.vscode
 *.iml
-*.ipr
+target
+HELP.md
+Readme.md
+mvnw
+mvnw.cmd
+.mvn
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Secrets : jamais dans l'image
+.env
+.env.*
+!.env.example
 
-### VS Code ###
-.vscode/
+# Fichiers Docker eux-mêmes
+Dockerfile
+.dockerignore
+docker-compose*.yml
+*.log

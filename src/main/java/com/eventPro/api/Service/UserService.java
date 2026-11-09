@@ -61,7 +61,7 @@ public class UserService {
         return authEmail ;
     }
 
-    public static void saveEmailInSession(String email,HttpServletRequest servletRequest){
+    public static void saveEmailInSession(String email , HttpServletRequest servletRequest){
         HttpSession session = servletRequest.getSession() ;
         session.setAttribute("authEmail",email);
     }
