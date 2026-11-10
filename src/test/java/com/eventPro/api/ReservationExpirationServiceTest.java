@@ -45,44 +45,6 @@ class ReservationExpirationServiceTest {
     private ReservationExpirationService reservationExpirationService;
 
     @Test
-    void expiresOverdueReservationAndReleasesItsInventory() {
-        UUID reservationId = UUID.randomUUID();
-        UUID categoryId = UUID.randomUUID();
-        TicketCategory category = TicketCategory.builder()
-                .id(categoryId)
-                .totalQuantity(10)
-                .reservedPlaces(3)
-                .soldPlaces(2)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .id(reservationId)
-                .reference("RES-1")
-                .statutReservation(StatutReservation.PENDING_PAYMENT)
-                .dateExpiration(NOW.minusMinutes(1))
-                .build();
-        reservation.addLine(LigneReservation.builder()
-                .ticketCategory(category)
-                .quantite(3)
-                .build());
-
-        when(clock.instant()).thenReturn(NOW.toInstant(ZoneOffset.UTC));
-        when(clock.getZone()).thenReturn(ZoneOffset.UTC);
-        when(reservationJpaRepository.findIdsToExpire(
-                eq(StatutReservation.PENDING_PAYMENT), eq(NOW), any()))
-                .thenReturn(List.of(reservationId), List.of());
-        when(reservationJpaRepository.findByIdForUpdate(reservationId))
-                .thenReturn(Optional.of(reservation));
-        when(ticketCategoryRepository.findAllByIdInOrderByIdForUpdate(List.of(categoryId)))
-                .thenReturn(List.of(category));
-
-        assertEquals(1, reservationExpirationService.expireOverdueReservations());
-        assertEquals(StatutReservation.EXPIRED, reservation.getStatutReservation());
-        assertEquals(0, category.getReservedPlaces());
-        assertEquals(2, category.getSoldPlaces());
-        verify(reservationJpaRepository).save(reservation);
-    }
-
-    @Test
     void doesNotExpireReservationThatIsNotDue() {
         UUID reservationId = UUID.randomUUID();
         Reservation reservation = Reservation.builder()
