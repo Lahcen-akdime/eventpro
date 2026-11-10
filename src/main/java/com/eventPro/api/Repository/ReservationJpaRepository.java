@@ -2,6 +2,7 @@ package com.eventPro.api.Repository;
 
 import com.eventPro.api.Entity.Client;
 import com.eventPro.api.Entity.Enum.StatutReservation;
+import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Reservation.Reservation;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
@@ -39,4 +40,10 @@ public interface ReservationJpaRepository extends JpaRepository<Reservation, UUI
     List<UUID> findIdsToExpire(@Param("statut") StatutReservation statut,
                                @Param("now") LocalDateTime now,
                                Pageable pageable);
+
+
+    @Query("""
+    SELECT re from Reservation re JOIN Event ev ON re.event = :event AND ev.state = PUBLISHED 
+    """)
+    List<Reservation> findAllByEventIdAndPublishedState(@Param("event") Event event);
 }

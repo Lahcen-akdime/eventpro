@@ -163,4 +163,12 @@ public class ReservationService {
         return reservation ;
     }
 
+
+
+    public List<ReservationResponse> getReservationByEventId(UUID eventId){
+        Event event = eventService.findEvent(eventId) ;
+        List<Reservation> reservations = reservationJpaRepository.findAllByEventIdAndPublishedState(event) ;
+        return reservations.stream().map(reservationMapper::toResponse).toList() ;
+    }
+
 }
