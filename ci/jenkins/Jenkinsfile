@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    triggers {
+        pollSCM('H/2 * * * *')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'git log -1 --pretty="%h %s"'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'chmod +x mvnw'
+                sh './mvnw -B -ntp clean compile'
+            }
+        }
+
+        stage('Tests') {
+            steps {
+                sh './mvnw -B -ntp test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo 'Pipeline OK' }
+        failure { echo 'Pipeline en échec : consulter les logs ci-dessus' }
+    }
+}
