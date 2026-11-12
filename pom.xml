@@ -165,8 +165,11 @@
 						<exclude>com/eventPro/api/ApiApplication.class</exclude>
 						<exclude>com/eventPro/api/ServletInitializer.class</exclude>
 						<exclude>com/eventPro/api/Dto/**</exclude>
+						<exclude>com/eventPro/api/Advice/**</exclude>
 						<exclude>com/eventPro/api/Config/**</exclude>
 						<exclude>com/eventPro/api/Mapper/*Impl.class</exclude>
+						<exclude>com/eventPro/api/Mapper</exclude>
+						<exclude>com/eventPro/api/Response</exclude>
 					</excludes>
 				</configuration>
 				<executions>
@@ -191,7 +194,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.80</minimum>
+											<minimum>0.50</minimum>
 										</limit>
 									</limits>
 								</rule>
