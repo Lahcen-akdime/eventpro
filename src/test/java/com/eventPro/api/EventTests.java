@@ -169,6 +169,17 @@ class EventTests {
         assertEquals(eventResponse, result.getContent().get(0));
     }
 
+    @Test
+    void getAllReturnsEmptyPageTest() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(eventJpaRepository.findAll(pageable)).thenReturn(Page.empty(pageable));
+
+        Page<EventResponse> result = eventServiceImpl.getAll(pageable);
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(eventMapper);
+    }
+
 
     @Test
     void createSuccessTest() {
@@ -196,6 +207,37 @@ class EventTests {
         assertEquals(StatutEvenement.DRAFT, event.getState());
         assertEquals(List.of(ticket), event.getTickets());
         verify(ticketCategoryRepository).saveAll(List.of(ticket));
+    }
+
+    @Test
+    void createPersistsEveryRequestedTicketCategoryTest() {
+        String email = "organizer@gmail.com";
+        EventCreateRequest request = mock(EventCreateRequest.class);
+        TicketCategoryCreateRequest firstRequest = mock(TicketCategoryCreateRequest.class);
+        TicketCategoryCreateRequest secondRequest = mock(TicketCategoryCreateRequest.class);
+        Organizer organizer = mock(Organizer.class);
+        TicketCategory firstCategory = mock(TicketCategory.class);
+        TicketCategory secondCategory = mock(TicketCategory.class);
+
+        when(request.startDate()).thenReturn(startDate);
+        when(request.endDate()).thenReturn(endDate);
+        when(request.openDate()).thenReturn(openDate);
+        when(request.closeDate()).thenReturn(closeDate);
+        when(request.categories()).thenReturn(List.of(firstRequest, secondRequest));
+        when(organizerJpaRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(organizer));
+        when(eventMapper.toEntity(request)).thenReturn(event);
+        when(ticketCategoryService.create(event, firstRequest)).thenReturn(firstCategory);
+        when(ticketCategoryService.create(event, secondRequest)).thenReturn(secondCategory);
+        when(eventJpaRepository.save(event)).thenReturn(event);
+        when(eventMapper.toResponse(event)).thenReturn(eventResponse);
+
+        EventResponse result = eventServiceImpl.create(request, email);
+
+        assertSame(eventResponse, result);
+        assertEquals(List.of(firstCategory, secondCategory), event.getTickets());
+        verify(ticketCategoryService).create(event, firstRequest);
+        verify(ticketCategoryService).create(event, secondRequest);
+        verify(ticketCategoryRepository).saveAll(List.of(firstCategory, secondCategory));
     }
 
     @Test
@@ -268,6 +310,30 @@ class EventTests {
     }
 
     @Test
+    void updateRejectsEventWithInvalidTicketSalesDates() {
+        event.setOpenDate(closeDate);
+        EventUpdateRequest request = mock(EventUpdateRequest.class);
+        when(eventJpaRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThrows(InvalidVDataException.class, () -> eventServiceImpl.update(eventId, request));
+
+        verify(eventMapper, never()).updateEntity(any(), any());
+        verify(eventJpaRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRejectsCancelledEventTest() {
+        event.setState(StatutEvenement.CANCELLED);
+        EventUpdateRequest request = mock(EventUpdateRequest.class);
+        when(eventJpaRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThrows(ResponseStatusException.class, () -> eventServiceImpl.update(eventId, request));
+
+        verify(eventMapper, never()).updateEntity(any(), any());
+        verify(eventJpaRepository, never()).save(any());
+    }
+
+    @Test
     void updateEventNotFoundTest() {
         EventUpdateRequest request = mock(EventUpdateRequest.class);
         when(eventJpaRepository.findById(eventId)).thenReturn(Optional.empty());
@@ -306,6 +372,15 @@ class EventTests {
     @Test
     void publishNotDraftTest() {
         event.setState(StatutEvenement.PUBLISHED);
+        when(eventJpaRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThrows(InvalidVDataException.class, () -> eventServiceImpl.publish(eventId));
+        verify(eventJpaRepository, never()).save(any());
+    }
+
+    @Test
+    void publishCancelledEventTest() {
+        event.setState(StatutEvenement.CANCELLED);
         when(eventJpaRepository.findById(eventId)).thenReturn(Optional.of(event));
 
         assertThrows(InvalidVDataException.class, () -> eventServiceImpl.publish(eventId));

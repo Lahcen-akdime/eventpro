@@ -36,7 +36,10 @@
 		<sonar.projectName>EventPro</sonar.projectName>
 		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.coverage.exclusions>
-			**/ApiApplication.java,**/ServletInitializer.java,**/Dto/**,**/Config/**
+			**/ApiApplication.java,
+			**/ServletInitializer.java,
+			**/Dto/**,
+			**/Mapper/*Impl.java
 		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
