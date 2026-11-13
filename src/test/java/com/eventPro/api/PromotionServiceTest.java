@@ -270,4 +270,29 @@ class PromotionServiceTest {
         assertThrows(InvalidOperationException.class, () -> promotionService.checkIsPossibleNow(promotion));
     }
 
+    // ---------- AddNewNumberOfUtilisation ----------
+
+    @Test
+    void addNewNumberOfUtilisationWithinLimitTest() {
+        Promotion promotion = mock(Promotion.class);
+        when(promotion.getNombreUtilisations()).thenReturn(4L);
+        when(promotion.getLimiteUtilisation()).thenReturn(10L);
+
+        assertDoesNotThrow(() -> promotionService.AddNewNumberOfUtilisation(promotion, 3L));
+
+        verify(promotion).addUtilisation(3L);
+    }
+
+    @Test
+    void addNewNumberOfUtilisationExceedsLimitTest() {
+        Promotion promotion = mock(Promotion.class);
+        when(promotion.getNombreUtilisations()).thenReturn(8L);
+        when(promotion.getLimiteUtilisation()).thenReturn(10L);
+
+        assertThrows(InvalidOperationException.class,
+                () -> promotionService.AddNewNumberOfUtilisation(promotion, 3L));
+
+        verify(promotion, never()).addUtilisation(any());
+    }
+
 }

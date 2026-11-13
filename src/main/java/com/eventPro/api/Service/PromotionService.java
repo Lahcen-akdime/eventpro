@@ -92,7 +92,7 @@ public class PromotionService {
     }
 
     public void AddNewNumberOfUtilisation(Promotion promotion,Long numberOfUsers){
-       if(promotion.getNombreUtilisations()+numberOfUsers > promotion.getLimiteUtilisation()){
+       if(promotion.getNombreUtilisations()+numberOfUsers <= promotion.getLimiteUtilisation()){
            promotion.addUtilisation(numberOfUsers);
        }
        else {
