@@ -41,9 +41,18 @@ public interface ReservationJpaRepository extends JpaRepository<Reservation, UUI
                                @Param("now") LocalDateTime now,
                                Pageable pageable);
 
-
     @Query("""
     SELECT re from Reservation re JOIN Event ev ON re.event = :event AND ev.state = PUBLISHED 
     """)
     List<Reservation> findAllByEventIdAndPublishedState(@Param("event") Event event);
+
+    @Query("""
+    SELECT re , re.client.name , ca.name , line.quantite , ca.event
+        from Reservation re JOIN TicketCategory ca JOIN LigneReservation line 
+            on re.client.email = :email
+              and line.reservation = re and line.ticketCategory = ca and ca.name = :nomCategorie
+                and line >= :quantiteMin
+    """)
+    List<Reservation> findAllByClientEmailAndCategoryNameAndQuantiteMin(String email,String nomCategorie , Long quantiteMin);
+
 }

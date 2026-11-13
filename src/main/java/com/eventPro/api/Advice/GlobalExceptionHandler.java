@@ -138,6 +138,12 @@ public class GlobalExceptionHandler {
         return buildTheError(ex,HttpStatus.UNAUTHORIZED.value(),request) ;
     }
 
+    @ExceptionHandler(AucuneReservationTrouveeException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleReservationNonTrouveeException(UserNotLoggedInException ex,WebRequest request){
+        return buildTheError(ex,HttpStatus.NOT_FOUND.value(),request) ;
+    }
+
 
 
     public ErrorResponse buildTheError(Exception ex ,int status,WebRequest request){

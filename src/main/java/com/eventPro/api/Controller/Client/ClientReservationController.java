@@ -14,6 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,5 +50,13 @@ public class ClientReservationController {
     @ResponseStatus
     public void cancel(@PathVariable UUID reservationId) {
         reservationService.cancel(reservationId);
+    }
+
+    @GetMapping("/recherche?email={email}?categoryName={categoryName}?QuantiteMin={QuantiteMin}")
+    @Operation(summary = "Lister les réservations du client avec leur email , quantite ")
+    public List<ReservationResponse> searchByMultipleConditions(@RequestParam String email ,
+                                                                @RequestParam String categoryName,
+                                                                @RequestParam Long quantiteMin) {
+        return reservationService.findAllByClientEmailAndCategoryNameAndQuantiteMin(email,categoryName,quantiteMin) ;
     }
 }

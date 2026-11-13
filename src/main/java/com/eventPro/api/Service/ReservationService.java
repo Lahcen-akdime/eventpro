@@ -7,6 +7,7 @@ import com.eventPro.api.Entity.*;
 import com.eventPro.api.Entity.Enum.StatutReservation;
 import com.eventPro.api.Entity.Reservation.LigneReservation;
 import com.eventPro.api.Entity.Reservation.Reservation;
+import com.eventPro.api.Exception.AucuneReservationTrouveeException;
 import com.eventPro.api.Exception.InsufficientStockException;
 import com.eventPro.api.Exception.InvalidOperationException;
 import com.eventPro.api.Exception.InvalidVDataException;
@@ -168,6 +169,17 @@ public class ReservationService {
     public List<ReservationResponse> getReservationByEventId(UUID eventId){
         Event event = eventService.findEvent(eventId) ;
         List<Reservation> reservations = reservationJpaRepository.findAllByEventIdAndPublishedState(event) ;
+        return reservations.stream().map(reservationMapper::toResponse).toList() ;
+    }
+
+    public List<ReservationResponse> findAllByClientEmailAndCategoryNameAndQuantiteMin(String email,String nomCategorie , Long quantiteMin){
+        if (quantiteMin == null) {
+            quantiteMin = 1L ;
+        }
+        List<Reservation> reservations = reservationJpaRepository.findAllByClientEmailAndCategoryNameAndQuantiteMin(email,nomCategorie,quantiteMin) ;
+        if(reservations.isEmpty()){
+            throw new AucuneReservationTrouveeException("il n'existe aucune reservation avec ces conditions") ;
+        }
         return reservations.stream().map(reservationMapper::toResponse).toList() ;
     }
 

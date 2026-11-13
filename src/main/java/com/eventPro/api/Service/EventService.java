@@ -8,6 +8,7 @@ import com.eventPro.api.Dto.TicketCategory.TicketCategoryResponse;
 import com.eventPro.api.Entity.Enum.StatutEvenement;
 import com.eventPro.api.Entity.Event;
 import com.eventPro.api.Entity.Organizer;
+import com.eventPro.api.Entity.Reservation.Reservation;
 import com.eventPro.api.Entity.TicketCategory;
 import com.eventPro.api.Exception.EmailNotFoundException;
 import com.eventPro.api.Exception.EventNotFoundException;
@@ -114,6 +115,7 @@ public class EventService {
     public Event findEvent(UUID id) {
         return eventJpaRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Événement introuvable"));
     }
+
 
 
 
