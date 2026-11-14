@@ -14,259 +14,353 @@ import com.eventPro.api.Repository.UserJpaRepository;
 import com.eventPro.api.Service.ClientService;
 import com.eventPro.api.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class ClientServiceTest {
+@ExtendWith(MockitoExtension.class) // Mockito cree les @Mock avant chaque test
+@MockitoSettings(strictness = Strictness.LENIENT)
+class ClientServiceTest {
 
     @Mock
-    UserJpaRepository userJpaRepository;
-
+    private ClientJpaRepository clientJpaRepository;
     @Mock
-    ClientJpaRepository clientJpaRepository;
-
+    private UserService userService;
     @Mock
-    ClientMapper clientMapper;
-
+    private UserJpaRepository userJpaRepository;
     @Mock
-    PasswordEncoder passwordEncoder;
-
+    private PasswordEncoder passwordEncoder;
     @Mock
-    UserService userService;
+    private ClientMapper clientMapper;
 
     @InjectMocks
-    ClientService clientService;
+    private ClientService clientService; // le vrai service avec les faux repository / encoder / mapper dedans
 
+    private final UUID id = UUID.randomUUID();
+
+    // ---------- petits helpers (comme OneUser() avant) ----------
+    private ClientRegisterRequest OneRegisterRequest(String email, String password) {
+        ClientRegisterRequest r = mock(ClientRegisterRequest.class);
+        when(r.email()).thenReturn(email);
+        when(r.password()).thenReturn(password);
+        return r;
+    }
+
+    private ClientUpdateRequest OneUpdateRequest(String name, String email, String phone) {
+        ClientUpdateRequest r = mock(ClientUpdateRequest.class);
+        when(r.name()).thenReturn(name);
+        when(r.email()).thenReturn(email);
+        when(r.phone()).thenReturn(phone);
+        return r;
+    }
+
+    private Client OneClient(boolean active) {
+        Client c = mock(Client.class);
+        when(c.getIsActive()).thenReturn(active);
+        return c;
+    }
+
+    // =====================================================================
+    // save
+    // =====================================================================
+    @Test
+    void save_valide_metLEmailEnMinuscules_hashLePassword_etDonneLeRoleClient() {
+        // ARRANGE
+        ClientRegisterRequest request = OneRegisterRequest("CLIENT@Gmail.COM", "12345678");
+        Client client = mock(Client.class);
+        Client saved = mock(Client.class);
+        ClientResponse response = mock(ClientResponse.class);
+        when(userJpaRepository.existsByEmailIgnoreCase("client@gmail.com")).thenReturn(false);
+        when(clientMapper.toEntity(request)).thenReturn(client);
+        when(passwordEncoder.encode("12345678")).thenReturn("hash123");
+        when(clientJpaRepository.save(client)).thenReturn(saved);
+        when(clientMapper.toDtoResponse(saved)).thenReturn(response);
+
+        // ACT
+        ClientResponse result = clientService.save(request);
+
+        // ASSERT
+        assertSame(response, result);
+        verify(client).setEmail("client@gmail.com"); // email en minuscules
+        verify(client).setPassword("hash123");       // jamais le password en clair
+        verify(client).setRole(Role.CLIENT);
+        verify(clientJpaRepository).save(client);
+    }
 
     @Test
-    public void emailAreadyExistsTest() {
-        String email = "lahcen@gmail.com";
-        ClientRegisterRequest client = ClientRegisterRequest.builder()
-                .email(email)
-                .build();
-        when(userJpaRepository.existsByEmailIgnoreCase(email)).thenReturn(true);
-        assertThatThrownBy(() -> clientService.save(client)).isInstanceOf(EmailAlreadyExistException.class);
+    void save_emailDejaUtilise_EmailAlreadyExist_sansRienSauvegarder() {
+        ClientRegisterRequest request = OneRegisterRequest("client@gmail.com", "12345678");
+        when(userJpaRepository.existsByEmailIgnoreCase("client@gmail.com")).thenReturn(true);
+
+        assertThrows(EmailAlreadyExistException.class, () -> clientService.save(request));
+
+        verifyNoInteractions(clientMapper, passwordEncoder);
         verify(clientJpaRepository, never()).save(any());
     }
 
+    // =====================================================================
+    // getMyProfile
+    // =====================================================================
     @Test
-    public void saveSuccessTest() {
-        ClientRegisterRequest request = ClientRegisterRequest.builder()
-                .email("Lahcen@Gmail.COM")
-                .password("secret123")
-                .build();
-        Client entity = new Client();
+    void getMyProfile_clientTrouve_retourneLeProfil() {
+        Client client = mock(Client.class);
         ClientResponse response = mock(ClientResponse.class);
-
-        when(userJpaRepository.existsByEmailIgnoreCase("lahcen@gmail.com")).thenReturn(false);
-        when(clientMapper.toEntity(request)).thenReturn(entity);
-        when(passwordEncoder.encode("secret123")).thenReturn("hashed");
-        when(clientJpaRepository.save(any(Client.class))).thenReturn(entity);
-        when(clientMapper.toDtoResponse(entity)).thenReturn(response);
-
-        ClientResponse result = clientService.save(request);
-
-        ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
-        verify(clientJpaRepository).save(captor.capture());
-        Client saved = captor.getValue();
-        assertThat(saved.getEmail()).isEqualTo("lahcen@gmail.com");
-        assertThat(saved.getPassword()).isEqualTo("hashed");
-        assertThat(saved.getRole()).isEqualTo(Role.CLIENT);
-        assertThat(result).isSameAs(response);
-    }
-
-
-    @Test
-    public void getMyProfileSuccessTest() {
-        Client client = new Client();
-        ClientResponse response = mock(ClientResponse.class);
-        when(clientJpaRepository.findByEmail("lahcen@gmail.com")).thenReturn(Optional.of(client));
+        when(clientJpaRepository.findByEmail("client@gmail.com")).thenReturn(Optional.of(client));
         when(clientMapper.toDtoResponse(client)).thenReturn(response);
 
-        ClientResponse result = clientService.getMyProfile("lahcen@gmail.com");
+        ClientResponse result = clientService.getMyProfile("client@gmail.com");
 
-        assertThat(result).isSameAs(response);
+        assertSame(response, result);
     }
 
     @Test
-    public void getMyProfileEmailNotFoundTest() {
-        when(clientJpaRepository.findByEmail("inconnu@gmail.com")).thenReturn(Optional.empty());
+    void getMyProfile_introuvable_EmailNotFound() {
+        when(clientJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> clientService.getMyProfile("inconnu@gmail.com"))
-                .isInstanceOf(EmailNotFoundException.class);
-        verify(clientMapper, never()).toDtoResponse(any());
+        assertThrows(EmailNotFoundException.class, () -> clientService.getMyProfile("x@gmail.com"));
+
+        verifyNoInteractions(clientMapper);
     }
 
-
+    // =====================================================================
+    // getAll
+    // =====================================================================
     @Test
-    public void getAllTest() {
+    void getAll_retourneLaPageMappee() {
+        // ARRANGE
         Pageable pageable = PageRequest.of(0, 10);
-        Client client = new Client();
-        ClientResponse response = mock(ClientResponse.class);
-        when(clientJpaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(client)));
-        when(clientMapper.toDtoResponse(client)).thenReturn(response);
+        Client c1 = mock(Client.class);
+        ClientResponse r1 = mock(ClientResponse.class);
+        when(clientJpaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(c1), pageable, 1));
+        when(clientMapper.toDtoResponse(c1)).thenReturn(r1);
 
-        Page<ClientResponse> result = clientService.getAll(pageable);
+        // ACT
+        Page<ClientResponse> page = clientService.getAll(pageable);
 
-        assertThat(result.getContent()).containsExactly(response);
-    }
-
-
-    @Test
-    public void updateMyProfileSuccessTest() {
-        ClientUpdateRequest request = mock(ClientUpdateRequest.class);
-        when(request.name()).thenReturn("Nouveau Nom");
-        when(request.email()).thenReturn("nouveau@gmail.com");
-        when(request.phone()).thenReturn("0600000000");
-
-        Client client = new Client();
-        ClientResponse response = mock(ClientResponse.class);
-        when(clientJpaRepository.findByEmail("lahcen@gmail.com")).thenReturn(Optional.of(client));
-        when(clientMapper.toDtoResponse(client)).thenReturn(response);
-
-        ClientResponse result = clientService.updateMyProfile("lahcen@gmail.com", request);
-
-        assertThat(client.getName()).isEqualTo("Nouveau Nom");
-        assertThat(client.getEmail()).isEqualTo("nouveau@gmail.com");
-        assertThat(client.getPhone()).isEqualTo("0600000000");
-        verify(userJpaRepository).save(any());
-        assertThat(result).isSameAs(response);
+        // ASSERT
+        assertEquals(1, page.getContent().size());
+        assertSame(r1, page.getContent().get(0));
     }
 
     @Test
-    public void updateMyProfileEmailNotFoundTest() {
-        ClientUpdateRequest request = mock(ClientUpdateRequest.class);
-        when(clientJpaRepository.findByEmail("inconnu@gmail.com")).thenReturn(Optional.empty());
+    void getAll_aucunClient_pageVide() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(clientJpaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        assertThatThrownBy(() -> clientService.updateMyProfile("inconnu@gmail.com", request))
-                .isInstanceOf(EmailNotFoundException.class);
+        Page<ClientResponse> page = clientService.getAll(pageable);
+
+        assertTrue(page.getContent().isEmpty());
+        verifyNoInteractions(clientMapper);
+    }
+
+    // =====================================================================
+    // updateMyProfile
+    // =====================================================================
+    @Test
+    void updateMyProfile_valide_metAJourNomEmailTelephone_etSauvegarde() {
+        // ARRANGE
+        Client client = mock(Client.class);
+        Client entiteMiseAJour = mock(Client.class); // ce que retourne clientMapper.toUpdateEntity(...)
+        ClientResponse response = mock(ClientResponse.class);
+        ClientUpdateRequest request = OneUpdateRequest("Nouveau Nom", "new@gmail.com", "0612345678");
+        when(clientJpaRepository.findByEmail("client@gmail.com")).thenReturn(Optional.of(client));
+        when(clientMapper.toUpdateEntity(request)).thenReturn(entiteMiseAJour);
+        when(clientMapper.toDtoResponse(client)).thenReturn(response);
+
+        // ACT
+        ClientResponse result = clientService.updateMyProfile("client@gmail.com", request);
+
+        // ASSERT
+        assertSame(response, result);
+        verify(client).setName("Nouveau Nom");
+        verify(client).setEmail("new@gmail.com");
+        verify(client).setPhone("0612345678");
+        verify(userJpaRepository).save(entiteMiseAJour);
+    }
+
+    @Test
+    void updateMyProfile_introuvable_EmailNotFound_sansSauvegarder() {
+        ClientUpdateRequest request = OneUpdateRequest("Nom", "new@gmail.com", "0612345678");
+        when(clientJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
+
+        assertThrows(EmailNotFoundException.class, () -> clientService.updateMyProfile("x@gmail.com", request));
+
         verify(userJpaRepository, never()).save(any());
     }
 
-
+    // =====================================================================
+    // activate
+    // =====================================================================
     @Test
-    public void activateSuccessTest() {
-        UUID id = UUID.randomUUID();
-        Client client = new Client();
-        client.setIsActive(false);
+    void activate_clientDesactive_leActiveEtSauvegarde() {
+        // ARRANGE
+        Client client = OneClient(false);
         ClientResponse response = mock(ClientResponse.class);
         when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
         when(clientMapper.toDtoResponse(client)).thenReturn(response);
 
+        // ACT
         ClientResponse result = clientService.activate(id);
 
-        assertThat(client.getIsActive()).isTrue();
+        // ASSERT
+        assertSame(response, result);
+        verify(client).setIsActive(true);
         verify(userJpaRepository).save(client);
-        assertThat(result).isSameAs(response);
     }
 
     @Test
-    public void activateAlreadyActiveTest() {
-        UUID id = UUID.randomUUID();
-        Client client = new Client();
-        client.setIsActive(true);
+    void activate_dejaActif_InvalidOperation_sansSauvegarder() {
+        Client client = OneClient(true);
         when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
 
-        assertThatThrownBy(() -> clientService.activate(id))
-                .isInstanceOf(InvalidOperationException.class);
+        assertThrows(InvalidOperationException.class, () -> clientService.activate(id));
+
+        verify(client, never()).setIsActive(anyBoolean());
         verify(userJpaRepository, never()).save(any());
     }
 
-
     @Test
-    public void desactivateSuccessTest() {
-        UUID id = UUID.randomUUID();
-        Client client = new Client();
-        client.setIsActive(true);
+    void activate_introuvable_EmailNotFound() {
+        when(clientJpaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EmailNotFoundException.class, () -> clientService.activate(id));
+
+        verify(userJpaRepository, never()).save(any());
+    }
+
+    // =====================================================================
+    // desactivate
+    // =====================================================================
+    @Test
+    void desactivate_clientActif_leDesactiveEtSauvegarde() {
+        // ARRANGE
+        Client client = OneClient(true);
         ClientResponse response = mock(ClientResponse.class);
         when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
         when(clientMapper.toDtoResponse(client)).thenReturn(response);
 
+        // ACT
         ClientResponse result = clientService.desactivate(id);
 
-        assertThat(client.getIsActive()).isFalse();
+        // ASSERT
+        assertSame(response, result);
+        verify(client).setIsActive(false);
         verify(userJpaRepository).save(client);
-        assertThat(result).isSameAs(response);
     }
 
     @Test
-    public void desactivateAlreadyDesactivatedTest() {
-        UUID id = UUID.randomUUID();
-        Client client = new Client();
-        client.setIsActive(false);
+    void desactivate_dejaDesactive_InvalidOperation_sansSauvegarder() {
+        Client client = OneClient(false);
         when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
 
-        assertThatThrownBy(() -> clientService.desactivate(id))
-                .isInstanceOf(InvalidOperationException.class);
+        assertThrows(InvalidOperationException.class, () -> clientService.desactivate(id));
+
+        verify(client, never()).setIsActive(anyBoolean());
         verify(userJpaRepository, never()).save(any());
     }
 
-
     @Test
-    public void findByIdNotFoundTest() {
-        UUID id = UUID.randomUUID();
+    void desactivate_introuvable_EmailNotFound() {
         when(clientJpaRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> clientService.findById(id))
-                .isInstanceOf(EmailNotFoundException.class);
+        assertThrows(EmailNotFoundException.class, () -> clientService.desactivate(id));
+
+        verify(userJpaRepository, never()).save(any());
     }
 
+    // =====================================================================
+    // findByEmail / findById
+    // =====================================================================
     @Test
-    public void findByIdSuccessTest() {
-        UUID id = UUID.randomUUID();
-        Client client = new Client();
-        when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
-
-        assertThat(clientService.findById(id)).isSameAs(client);
-    }
-
-    @Test
-    public void getAuthenticatedClientSuccessTest() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        Client client = new Client();
+    void findByEmail_trouve_retourneLeClient() {
+        Client client = mock(Client.class);
         when(clientJpaRepository.findByEmail("client@gmail.com")).thenReturn(Optional.of(client));
 
-        try (MockedStatic<UserService> mockedUser = Mockito.mockStatic(UserService.class)) {
-            mockedUser.when(() -> UserService.getAuthenticatedEmail(request)).thenReturn("client@gmail.com");
-
-            assertThat(clientService.getAuthaunticatedClient(request)).isSameAs(client);
-        }
+        assertSame(client, clientService.findByEmail("client@gmail.com"));
     }
 
     @Test
-    public void getAuthenticatedClientNotFoundTest() {
+    void findByEmail_introuvable_EmailNotFound() {
+        when(clientJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
+
+        assertThrows(EmailNotFoundException.class, () -> clientService.findByEmail("x@gmail.com"));
+    }
+
+    @Test
+    void findById_trouve_retourneLeClient() {
+        Client client = mock(Client.class);
+        when(clientJpaRepository.findById(id)).thenReturn(Optional.of(client));
+
+        assertSame(client, clientService.findById(id));
+    }
+
+    @Test
+    void findById_introuvable_EmailNotFound() {
+        when(clientJpaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EmailNotFoundException.class, () -> clientService.findById(id));
+    }
+
+    // =====================================================================
+    // getAuthaunticatedClient
+    // userService.getAuthenticatedEmail(...) est STATIQUE : meme sur le mock userService, c'est la vraie
+    // methode qui s'execute. On lui donne donc une vraie session (mock de HttpSession) dans la requete.
+    // =====================================================================
+    @Test
+    void getAuthaunticatedClient_sessionValide_retourneLeClientConnecte() {
+        // ARRANGE
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(clientJpaRepository.findByEmail("inconnu@gmail.com")).thenReturn(Optional.empty());
+        HttpSession session = mock(HttpSession.class);
+        Client client = mock(Client.class);
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("authEmail")).thenReturn("client@gmail.com");
+        when(clientJpaRepository.findByEmail("client@gmail.com")).thenReturn(Optional.of(client));
 
-        try (MockedStatic<UserService> mockedUser = Mockito.mockStatic(UserService.class)) {
-            mockedUser.when(() -> UserService.getAuthenticatedEmail(request)).thenReturn("inconnu@gmail.com");
+        // ACT
+        Client result = clientService.getAuthaunticatedClient(request);
 
-            assertThatThrownBy(() -> clientService.getAuthaunticatedClient(request))
-                    .isInstanceOf(EmailNotFoundException.class);
-        }
+        // ASSERT
+        assertSame(client, result);
+    }
+
+    @Test
+    void getAuthaunticatedClient_emailDeSessionSansClient_EmailNotFound() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpSession session = mock(HttpSession.class);
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("authEmail")).thenReturn("x@gmail.com");
+        when(clientJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
+
+        assertThrows(EmailNotFoundException.class, () -> clientService.getAuthaunticatedClient(request));
+    }
+
+    @Test
+    void getAuthaunticatedClient_pasConnecte_401_sansChercherLeClient() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getSession(false)).thenReturn(null); // aucune session
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> clientService.getAuthaunticatedClient(request));
+
+        assertEquals(401, ex.getStatusCode().value());
+        verifyNoInteractions(clientJpaRepository);
     }
 }

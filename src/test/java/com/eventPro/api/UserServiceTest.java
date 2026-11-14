@@ -1,8 +1,6 @@
 package com.eventPro.api;
 
 import com.eventPro.api.Dto.User.UserDto;
-import com.eventPro.api.Entity.Client;
-import com.eventPro.api.Entity.Enum.Role;
 import com.eventPro.api.Entity.User;
 import com.eventPro.api.Exception.AccessDeniedException;
 import com.eventPro.api.Exception.InvalidCredantialsException;
@@ -16,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,7 +24,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class) // Mockito cree les @Mock avant chaque test
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UserServiceTest {
 
     @Mock
@@ -35,101 +36,202 @@ class UserServiceTest {
     private UserMapper userMapper;
 
     @InjectMocks
-    private UserService userService;
+    private UserService userService; // le vrai service avec les faux repository / encoder / mapper dedans
 
+    // ---------- petits helpers (comme OneUser() avant) ----------
+    private User OneUser(String password, boolean active) {
+        User u = mock(User.class);
+        when(u.getPassword()).thenReturn(password);
+        when(u.getIsActive()).thenReturn(active);
+        return u;
+    }
+
+    // =====================================================================
+    // findByEmail / update / save
+    // =====================================================================
     @Test
-    void findsUserByEmail() {
-        User user = Client.builder().email("user@example.com").build();
-        when(userJpaRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+    void findByEmail_utilisateurTrouve_retourneLOptionalRempli() {
+        // ARRANGE
+        User user = mock(User.class);
+        when(userJpaRepository.findByEmail("a@gmail.com")).thenReturn(Optional.of(user));
 
-        assertEquals(Optional.of(user), userService.findByEmail("user@example.com"));
+        // ACT
+        Optional<User> result = userService.findByEmail("a@gmail.com");
+
+        // ASSERT
+        assertTrue(result.isPresent());
+        assertSame(user, result.get());
     }
 
     @Test
-    void savesAndUpdatesUser() {
-        User user = Client.builder().email("user@example.com").build();
+    void findByEmail_introuvable_retourneUnOptionalVide() {
+        when(userJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
+
+        assertTrue(userService.findByEmail("x@gmail.com").isEmpty());
+    }
+
+    @Test
+    void update_sauvegardeEtRetourneLUtilisateur() {
+        User user = mock(User.class);
         when(userJpaRepository.save(user)).thenReturn(user);
 
-        assertSame(user, userService.save(user));
-        assertSame(user, userService.update(user));
-        verify(userJpaRepository, times(2)).save(user);
+        User result = userService.update(user);
+
+        assertSame(user, result);
+        verify(userJpaRepository).save(user);
     }
 
     @Test
-    void logsInWithEmailIgnoringCaseWhenPasswordMatches() {
-        User user = Client.builder()
-                .name("Amina")
-                .email("user@example.com")
-                .password("hashed-password")
-                .role(Role.CLIENT)
-                .build();
-        UserDto response = UserDto.builder().name("Amina").email("user@example.com").role(Role.CLIENT).build();
-        when(userJpaRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("secret", "hashed-password")).thenReturn(true);
-        when(userMapper.toDtoResponse(user)).thenReturn(response);
+    void save_sauvegardeEtRetourneLUtilisateur() {
+        User user = mock(User.class);
+        when(userJpaRepository.save(user)).thenReturn(user);
 
-        assertSame(response, userService.login("USER@EXAMPLE.COM", "secret"));
-        verify(userMapper).toDtoResponse(user);
+        User result = userService.save(user);
+
+        assertSame(user, result);
+        verify(userJpaRepository).save(user);
+    }
+
+    // =====================================================================
+    // login
+    // =====================================================================
+    @Test
+    void login_identifiantsCorrects_retourneLeDto() {
+        // ARRANGE
+        User user = OneUser("hash123", true);
+        UserDto dto = mock(UserDto.class);
+        when(userJpaRepository.findByEmail("a@gmail.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("12345678", "hash123")).thenReturn(true);
+        when(userMapper.toDtoResponse(user)).thenReturn(dto);
+
+        // ACT
+        UserDto result = userService.login("a@gmail.com", "12345678");
+
+        // ASSERT
+        assertSame(dto, result);
+        verify(passwordEncoder).matches("12345678", "hash123");
     }
 
     @Test
-    void rejectsLoginWhenUserDoesNotExistOrPasswordDoesNotMatch() {
-        when(userJpaRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+    void login_emailEnMajuscules_estMisEnMinusculesAvantLaRecherche() {
+        User user = OneUser("hash123", true);
+        UserDto dto = mock(UserDto.class);
+        when(userJpaRepository.findByEmail("a@gmail.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("12345678", "hash123")).thenReturn(true);
+        when(userMapper.toDtoResponse(user)).thenReturn(dto);
 
-        assertThrows(InvalidCredantialsException.class,
-                () -> userService.login("MISSING@example.com", "secret"));
+        UserDto result = userService.login("A@GMAIL.COM", "12345678");
 
-        User user = Client.builder()
-                .email("user@example.com")
-                .password("hashed-password")
-                .build();
-        when(userJpaRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrong", "hashed-password")).thenReturn(false);
-
-        assertThrows(InvalidCredantialsException.class,
-                () -> userService.login("user@example.com", "wrong"));
-        verify(userMapper, never()).toDtoResponse(any());
+        assertSame(dto, result);
+        verify(userJpaRepository).findByEmail("a@gmail.com");
     }
 
     @Test
-    void savesEmailInSessionAndReadsItBack() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpSession session = mock(HttpSession.class);
-        when(request.getSession()).thenReturn(session);
-        when(request.getSession(false)).thenReturn(session);
-        when(session.getAttribute("authEmail")).thenReturn("user@example.com");
+    void login_emailInconnu_InvalidCredentials_sansVerifierLePassword() {
+        when(userJpaRepository.findByEmail("x@gmail.com")).thenReturn(Optional.empty());
 
-        UserService.saveEmailInSession("user@example.com", request);
+        InvalidCredantialsException ex = assertThrows(InvalidCredantialsException.class,
+                () -> userService.login("x@gmail.com", "12345678"));
 
-        verify(session).setAttribute("authEmail", "user@example.com");
-        assertEquals("user@example.com", UserService.getAuthenticatedEmail(request));
+        assertTrue(ex.getMessage().contains("incorrect"));
+        verifyNoInteractions(passwordEncoder, userMapper);
     }
 
     @Test
-    void rejectsRequestWithoutAuthenticatedSession() {
+    void login_mauvaisPassword_InvalidCredentials_sansMapper() {
+        User user = OneUser("hash123", true);
+        when(userJpaRepository.findByEmail("a@gmail.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("mauvais", "hash123")).thenReturn(false);
+
+        InvalidCredantialsException ex = assertThrows(InvalidCredantialsException.class,
+                () -> userService.login("a@gmail.com", "mauvais"));
+
+        assertTrue(ex.getMessage().contains("incorrect"));
+        verifyNoInteractions(userMapper);
+    }
+
+    // =====================================================================
+    // getAuthenticatedEmail (methode statique)
+    // =====================================================================
+    @Test
+    void getAuthenticatedEmail_aucuneSession_401() {
+        // getSession(false) retourne null : l'utilisateur n'est pas connecte
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getSession(false)).thenReturn(null);
 
-        assertThrows(ResponseStatusException.class, () -> UserService.getAuthenticatedEmail(request));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> UserService.getAuthenticatedEmail(request));
 
-        HttpSession session = mock(HttpSession.class);
-        when(request.getSession(false)).thenReturn(session);
-        when(session.getAttribute("authEmail")).thenReturn(null);
-        assertThrows(ResponseStatusException.class, () -> UserService.getAuthenticatedEmail(request));
+        assertEquals(401, ex.getStatusCode().value());
     }
 
     @Test
-    void permitsActiveUsersAndRejectsMissingOrInactiveUsers() {
-        User activeUser = Client.builder().isActive(true).build();
-        when(userJpaRepository.findByEmailIgnoreCase("active@example.com")).thenReturn(Optional.of(activeUser));
+    void getAuthenticatedEmail_sessionSansAttributAuthEmail_401() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpSession session = mock(HttpSession.class);
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("authEmail")).thenReturn(null);
 
-        assertDoesNotThrow(() -> userService.checkIsActive("active@example.com"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> UserService.getAuthenticatedEmail(request));
 
-        when(userJpaRepository.findByEmailIgnoreCase("missing@example.com")).thenReturn(Optional.empty());
-        assertThrows(AccessDeniedException.class, () -> userService.checkIsActive("missing@example.com"));
+        assertEquals(401, ex.getStatusCode().value());
+    }
 
-        User inactiveUser = Client.builder().isActive(false).build();
-        when(userJpaRepository.findByEmailIgnoreCase("inactive@example.com")).thenReturn(Optional.of(inactiveUser));
-        assertThrows(AccessDeniedException.class, () -> userService.checkIsActive("inactive@example.com"));
+    @Test
+    void getAuthenticatedEmail_sessionAvecEmail_retourneLEmail() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpSession session = mock(HttpSession.class);
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("authEmail")).thenReturn("a@gmail.com");
+
+        String email = UserService.getAuthenticatedEmail(request);
+
+        assertEquals("a@gmail.com", email);
+        verify(request).getSession(false); // ne cree jamais de nouvelle session
+        verify(request, never()).getSession();
+    }
+
+    // =====================================================================
+    // saveEmailInSession (methode statique)
+    // =====================================================================
+    @Test
+    void saveEmailInSession_metLEmailDansLaSession() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpSession session = mock(HttpSession.class);
+        when(request.getSession()).thenReturn(session);
+
+        UserService.saveEmailInSession("a@gmail.com", request);
+
+        verify(session).setAttribute("authEmail", "a@gmail.com");
+    }
+
+    // =====================================================================
+    // checkIsActive
+    // =====================================================================
+    @Test
+    void checkIsActive_utilisateurIntrouvable_AccessDenied() {
+        when(userJpaRepository.findByEmailIgnoreCase("x@gmail.com")).thenReturn(Optional.empty());
+
+        AccessDeniedException ex = assertThrows(AccessDeniedException.class,
+                () -> userService.checkIsActive("x@gmail.com"));
+
+        assertTrue(ex.getMessage().contains("desactivated"));
+    }
+
+    @Test
+    void checkIsActive_compteDesactive_AccessDenied() {
+        User user = OneUser("hash123", false);
+        when(userJpaRepository.findByEmailIgnoreCase("a@gmail.com")).thenReturn(Optional.of(user));
+
+        assertThrows(AccessDeniedException.class, () -> userService.checkIsActive("a@gmail.com"));
+    }
+
+    @Test
+    void checkIsActive_compteActif_neLevePasDException() {
+        User user = OneUser("hash123", true);
+        when(userJpaRepository.findByEmailIgnoreCase("a@gmail.com")).thenReturn(Optional.of(user));
+
+        assertDoesNotThrow(() -> userService.checkIsActive("a@gmail.com"));
     }
 }
