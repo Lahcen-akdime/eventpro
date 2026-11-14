@@ -58,7 +58,7 @@ public class Promotion {
     private Event event ;
 
     public void addUtilisation(Long numberUtilisation){
-        nombreUtilisations++ ;
+        nombreUtilisations += numberUtilisation ;
     }
 
 
