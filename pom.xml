@@ -39,7 +39,8 @@
 			**/ApiApplication.java,
 			**/ServletInitializer.java,
 			**/Dto/**,
-			**/Mapper/*Impl.java
+			**/Mapper/*Impl.java,
+			**/Response.java
 		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
@@ -165,36 +166,44 @@
 					<argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/5.23.0/mockito-core-5.23.0.jar -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.13</version>
+
 				<configuration>
 					<excludes>
-						<exclude>com/eventPro/api/ApiApplication.class</exclude>
-						<exclude>com/eventPro/api/ServletInitializer.class</exclude>
+						<exclude>com/eventPro/api/ApiApplication*</exclude>
+						<exclude>com/eventPro/api/ServletInitializer*</exclude>
 						<exclude>com/eventPro/api/Dto/**</exclude>
-						<exclude>com/eventPro/api/Advice/**</exclude>
-						<exclude>com/eventPro/api/Config/**</exclude>
-						<exclude>com/eventPro/api/Mapper/*Impl.class</exclude>
-						<exclude>com/eventPro/api/Mapper</exclude>
-						<exclude>com/eventPro/api/Response</exclude>
+						<exclude>com/eventPro/api/Mapper/*Impl*</exclude>
+						<exclude>com/eventPro/api/Response*</exclude>
 					</excludes>
 				</configuration>
+
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
-						<goals><goal>prepare-agent</goal></goals>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
 					</execution>
+
 					<execution>
 						<id>report</id>
 						<phase>test</phase>
-						<goals><goal>report</goal></goals>
+						<goals>
+							<goal>report</goal>
+						</goals>
 					</execution>
+
 					<execution>
 						<id>check</id>
 						<phase>verify</phase>
-						<goals><goal>check</goal></goals>
+						<goals>
+							<goal>check</goal>
+						</goals>
 						<configuration>
 							<rules>
 								<rule>
@@ -203,10 +212,11 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.50</minimum>
+											<minimum>0.60</minimum>
 										</limit>
 									</limits>
 								</rule>
+
 								<rule>
 									<element>CLASS</element>
 									<includes>
@@ -230,6 +240,7 @@
 					</execution>
 				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 
