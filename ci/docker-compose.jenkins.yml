@@ -1,6 +1,13 @@
 name: eventpro-ci
 
 services:
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"          # visible depuis ta machine seulement
+    volumes:
+      - registry_data:/var/lib/registry
   jenkins:
     build: ./jenkins
     image: eventpro-jenkins:lts-jdk21
@@ -60,7 +67,6 @@ services:
         nofile: { soft: 131072, hard: 131072 }
         nproc: 8192
 
-
 volumes:
   jenkins_home:
     external: true
@@ -69,3 +75,4 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
+  registry_data:
